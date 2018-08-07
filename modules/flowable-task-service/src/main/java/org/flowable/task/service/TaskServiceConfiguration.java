@@ -15,10 +15,14 @@ package org.flowable.task.service;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.AbstractServiceConfiguration;
-import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.impl.AbstractServiceConfiguration;
+import org.flowable.common.engine.impl.cfg.IdGenerator;
 import org.flowable.idm.api.IdmIdentityService;
+import org.flowable.task.api.TaskQueryInterceptor;
+import org.flowable.task.api.history.HistoricTaskQueryInterceptor;
 import org.flowable.task.service.history.InternalHistoryTaskManager;
 import org.flowable.task.service.impl.HistoricTaskServiceImpl;
 import org.flowable.task.service.impl.TaskServiceImpl;
@@ -59,21 +63,36 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
     protected InternalTaskVariableScopeResolver internalTaskVariableScopeResolver;
     protected InternalHistoryTaskManager internalHistoryTaskManager;
     protected InternalTaskLocalizationManager internalTaskLocalizationManager;
+    protected InternalTaskAssignmentManager internalTaskAssignmentManager;
     
     protected boolean enableTaskRelationshipCounts;
     protected boolean enableLocalization;
     
+    protected TaskQueryInterceptor taskQueryInterceptor;
+    protected HistoricTaskQueryInterceptor historicTaskQueryInterceptor;
     protected int taskQueryLimit;
     protected int historicTaskQueryLimit;
+    
+    protected IdGenerator idGenerator;
+
+    protected TaskPostProcessor taskPostProcessor;
 
     // init
     // /////////////////////////////////////////////////////////////////////
 
     public void init() {
+        checkIdGenerator();
         initDataManagers();
         initEntityManagers();
+        initTaskPostProcessor();
     }
-    
+
+    protected void checkIdGenerator() {
+        if (this.idGenerator == null) {
+            throw new FlowableException("Id generator for task configuration must be initialized");
+        }
+    }
+
     // Data managers
     ///////////////////////////////////////////////////////////
 
@@ -92,6 +111,12 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         }
         if (historicTaskInstanceEntityManager == null) {
             historicTaskInstanceEntityManager = new HistoricTaskInstanceEntityManagerImpl(this, historicTaskInstanceDataManager);
+        }
+    }
+
+    public void initTaskPostProcessor() {
+        if (taskPostProcessor == null) {
+            taskPostProcessor = taskBuilder -> taskBuilder;
         }
     }
 
@@ -185,6 +210,14 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
         this.internalTaskLocalizationManager = internalTaskLocalizationManager;
     }
 
+    public InternalTaskAssignmentManager getInternalTaskAssignmentManager() {
+        return internalTaskAssignmentManager;
+    }
+
+    public void setInternalTaskAssignmentManager(InternalTaskAssignmentManager internalTaskAssignmentManager) {
+        this.internalTaskAssignmentManager = internalTaskAssignmentManager;
+    }
+
     public boolean isEnableTaskRelationshipCounts() {
         return enableTaskRelationshipCounts;
     }
@@ -200,6 +233,24 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
 
     public TaskServiceConfiguration setEnableLocalization(boolean enableLocalization) {
         this.enableLocalization = enableLocalization;
+        return this;
+    }
+
+    public TaskQueryInterceptor getTaskQueryInterceptor() {
+        return taskQueryInterceptor;
+    }
+
+    public TaskServiceConfiguration setTaskQueryInterceptor(TaskQueryInterceptor taskQueryInterceptor) {
+        this.taskQueryInterceptor = taskQueryInterceptor;
+        return this;
+    }
+
+    public HistoricTaskQueryInterceptor getHistoricTaskQueryInterceptor() {
+        return historicTaskQueryInterceptor;
+    }
+
+    public TaskServiceConfiguration setHistoricTaskQueryInterceptor(HistoricTaskQueryInterceptor historicTaskQueryInterceptor) {
+        this.historicTaskQueryInterceptor = historicTaskQueryInterceptor;
         return this;
     }
 
@@ -242,6 +293,24 @@ public class TaskServiceConfiguration extends AbstractServiceConfiguration {
     @Override
     public TaskServiceConfiguration setTypedEventListeners(Map<String, List<FlowableEventListener>> typedEventListeners) {
         this.typedEventListeners = typedEventListeners;
+        return this;
+    }
+
+    public TaskServiceConfiguration setIdGenerator(IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
+        return this;
+    }
+
+    public IdGenerator getIdGenerator() {
+        return idGenerator;
+    }
+
+    public TaskPostProcessor getTaskPostProcessor() {
+        return taskPostProcessor;
+    }
+
+    public TaskServiceConfiguration setTaskPostProcessor(TaskPostProcessor processor) {
+        this.taskPostProcessor = processor;
         return this;
     }
 }

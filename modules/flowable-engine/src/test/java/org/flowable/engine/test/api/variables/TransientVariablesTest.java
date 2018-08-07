@@ -18,10 +18,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.impl.util.CollectionUtil;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.ExecutionListener;
-import org.flowable.engine.common.api.delegate.Expression;
+import org.flowable.common.engine.api.delegate.Expression;
+import org.flowable.common.engine.impl.util.CollectionUtil;
 import org.flowable.engine.delegate.JavaDelegate;
 import org.flowable.engine.delegate.TaskListener;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
@@ -248,7 +248,7 @@ public class TransientVariablesTest extends PluggableFlowableTestCase {
         assertEquals("task1", task.getTaskDefinitionKey());
         Map<String, Object> transientVarMap = new HashMap<>();
         transientVarMap.put("status", 201);
-        taskService.complete(task.getId(), new HashMap<String, Object>(), transientVarMap);
+        taskService.complete(task.getId(), new HashMap<>(), transientVarMap);
 
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertEquals("task2", task.getTaskDefinitionKey());
@@ -258,13 +258,13 @@ public class TransientVariablesTest extends PluggableFlowableTestCase {
         assertEquals("task1", task.getTaskDefinitionKey());
         transientVarMap.clear();
         transientVarMap.put("status", 200);
-        taskService.complete(task.getId(), new HashMap<String, Object>(), transientVarMap);
+        taskService.complete(task.getId(), new HashMap<>(), transientVarMap);
 
         task = taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult();
         assertEquals("task3", task.getTaskDefinitionKey());
         transientVarMap.clear();
         transientVarMap.put("status2", 200);
-        taskService.complete(task.getId(), new HashMap<String, Object>(), transientVarMap);
+        taskService.complete(task.getId(), new HashMap<>(), transientVarMap);
     }
 
     /* Service task class for previous tests */

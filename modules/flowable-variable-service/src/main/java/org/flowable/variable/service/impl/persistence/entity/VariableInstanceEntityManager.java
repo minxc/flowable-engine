@@ -14,10 +14,9 @@ package org.flowable.variable.service.impl.persistence.entity;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.flowable.engine.common.impl.persistence.entity.EntityManager;
+import org.flowable.common.engine.impl.persistence.entity.EntityManager;
 import org.flowable.variable.api.types.VariableType;
 
 /**
@@ -55,6 +54,10 @@ public interface VariableInstanceEntityManager extends EntityManager<VariableIns
     
     List<VariableInstanceEntity> findVariableInstancesBySubScopeIdAndScopeTypeAndNames(String subScopeId, String scopeType, Collection<String> variableNames);
 
-    void deleteVariableInstanceMap(Map<String, VariableInstanceEntity> variableInstances);
+    void deleteVariablesByTaskId(String taskId);
+
+    void deleteVariablesByExecutionId(String executionId);
+    
+    void deleteByScopeIdAndScopeType(String scopeId, String scopeType);
 
 }

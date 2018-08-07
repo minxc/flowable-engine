@@ -12,10 +12,10 @@
  */
 package org.flowable.task.service.impl.util;
 
-import org.flowable.engine.common.impl.context.Context;
-import org.flowable.engine.common.impl.db.DbSqlSession;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.identitylink.service.HistoricIdentityLinkService;
 import org.flowable.identitylink.service.IdentityLinkServiceConfiguration;
 import org.flowable.identitylink.service.impl.persistence.entity.HistoricIdentityLinkEntityManager;
@@ -34,7 +34,8 @@ public class CommandContextUtil {
     
     public static TaskServiceConfiguration getTaskServiceConfiguration(CommandContext commandContext) {
         if (commandContext != null) {
-            return (TaskServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_TASK_SERVICE_CONFIG);
+            return (TaskServiceConfiguration) commandContext.getCurrentEngineConfiguration().getServiceConfigurations()
+                            .get(EngineConfigurationConstants.KEY_TASK_SERVICE_CONFIG);
         }
         return null;
     }
@@ -45,7 +46,8 @@ public class CommandContextUtil {
     
     public static VariableServiceConfiguration getVariableServiceConfiguration(CommandContext commandContext) {
         if (commandContext != null) {
-            return (VariableServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_VARIABLE_SERVICE_CONFIG);
+            return (VariableServiceConfiguration) commandContext.getCurrentEngineConfiguration().getServiceConfigurations()
+                            .get(EngineConfigurationConstants.KEY_VARIABLE_SERVICE_CONFIG);
         }
         return null;
     }
@@ -56,7 +58,8 @@ public class CommandContextUtil {
     
     public static IdentityLinkServiceConfiguration getIdentityLinkServiceConfiguration(CommandContext commandContext) {
         if (commandContext != null) {
-            return (IdentityLinkServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_IDENTITY_LINK_SERVICE_CONFIG);
+            return (IdentityLinkServiceConfiguration) commandContext.getCurrentEngineConfiguration().getServiceConfigurations()
+                            .get(EngineConfigurationConstants.KEY_IDENTITY_LINK_SERVICE_CONFIG);
         }
         return null;
     }

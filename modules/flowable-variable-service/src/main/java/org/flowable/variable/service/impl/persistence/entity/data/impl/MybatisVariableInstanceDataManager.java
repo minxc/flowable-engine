@@ -18,9 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.flowable.engine.common.impl.db.AbstractDataManager;
-import org.flowable.engine.common.impl.db.CachedEntityMatcher;
-import org.flowable.engine.common.impl.db.SingleCachedEntityMatcher;
+import org.flowable.common.engine.impl.db.AbstractDataManager;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.db.SingleCachedEntityMatcher;
+import org.flowable.common.engine.impl.persistence.cache.CachedEntityMatcher;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntityImpl;
 import org.flowable.variable.service.impl.persistence.entity.data.VariableInstanceDataManager;
@@ -31,6 +32,7 @@ import org.flowable.variable.service.impl.persistence.entity.data.impl.cachematc
 import org.flowable.variable.service.impl.persistence.entity.data.impl.cachematcher.VariableInstanceBySubScopeIdAndScopeTypeAndVariableNameMatcher;
 import org.flowable.variable.service.impl.persistence.entity.data.impl.cachematcher.VariableInstanceBySubScopeIdAndScopeTypeAndVariableNamesMatcher;
 import org.flowable.variable.service.impl.persistence.entity.data.impl.cachematcher.VariableInstanceBySubScopeIdAndScopeTypeMatcher;
+import org.flowable.variable.service.impl.persistence.entity.data.impl.cachematcher.VariableInstanceByTaskIdMatcher;
 
 /**
  * @author Joram Barrez
@@ -39,6 +41,9 @@ public class MybatisVariableInstanceDataManager extends AbstractDataManager<Vari
 
     protected CachedEntityMatcher<VariableInstanceEntity> variableInstanceByExecutionIdMatcher 
         = new VariableInstanceByExecutionIdMatcher();
+    
+    protected CachedEntityMatcher<VariableInstanceEntity> variableInstanceByTaskIdMatcher
+        = new VariableInstanceByTaskIdMatcher();
     
     protected CachedEntityMatcher<VariableInstanceEntity> variableInstanceByScopeIdAndScopeTypeMatcher 
         = new VariableInstanceByScopeIdAndScopeTypeMatcher();
@@ -67,9 +72,8 @@ public class MybatisVariableInstanceDataManager extends AbstractDataManager<Vari
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List<VariableInstanceEntity> findVariableInstancesByTaskId(String taskId) {
-        return getDbSqlSession().selectList("selectVariablesByTaskId", taskId);
+        return getList("selectVariablesByTaskId", taskId, variableInstanceByTaskIdMatcher, true);
     }
 
     @Override
@@ -124,7 +128,6 @@ public class MybatisVariableInstanceDataManager extends AbstractDataManager<Vari
     }
     
     @Override
-    @SuppressWarnings("unchecked")
     public List<VariableInstanceEntity> findVariableInstanceByScopeIdAndScopeType(String scopeId, String scopeType) {
         Map<String, Object> params = new HashMap<>(2);
         params.put("scopeId", scopeId);
@@ -174,6 +177,34 @@ public class MybatisVariableInstanceDataManager extends AbstractDataManager<Vari
         params.put("scopeType", scopeType);
         params.put("variableNames", variableNames);
         return getList("selectVariableInstanceBySubScopeIdAndScopeTypeAndNames", params, variableInstanceBySubScopeIdAndScopeTypeAndVariableNamesMatcher, true);
+    }
+    
+    @Override
+    public void deleteVariablesByTaskId(String taskId) {
+        DbSqlSession dbSqlSession = getDbSqlSession();
+        if (isEntityInserted(dbSqlSession, "task", taskId)) {
+            deleteCachedEntities(dbSqlSession, variableInstanceByTaskIdMatcher, taskId);
+        } else {
+            bulkDelete("deleteVariableInstancesByTaskId", variableInstanceByTaskIdMatcher, taskId);
+        }
+    }
+    
+    @Override
+    public void deleteVariablesByExecutionId(String executionId) {
+        DbSqlSession dbSqlSession = getDbSqlSession();
+        if (isEntityInserted(dbSqlSession, "execution", executionId)) {
+            deleteCachedEntities(dbSqlSession, variableInstanceByExecutionIdMatcher, executionId);
+        } else {
+            bulkDelete("deleteVariableInstancesByExecutionId", variableInstanceByExecutionIdMatcher, executionId);
+        }
+    }
+    
+    @Override
+    public void deleteByScopeIdAndScopeType(String scopeId, String scopeType) {
+        Map<String, Object> params = new HashMap<>(3);
+        params.put("scopeId", scopeId);
+        params.put("scopeType", scopeType);
+        bulkDelete("deleteVariablesByScopeIdAndScopeType", variableInstanceByScopeIdAndScopeTypeMatcher, params);
     }
 
 }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 import org.flowable.variable.api.types.VariableType;
 import org.flowable.variable.service.VariableServiceConfiguration;
 import org.flowable.variable.service.impl.persistence.entity.data.VariableInstanceDataManager;
@@ -133,12 +133,18 @@ public class VariableInstanceEntityManagerImpl extends AbstractEntityManager<Var
     }
 
     @Override
-    public void deleteVariableInstanceMap(Map<String, VariableInstanceEntity> variableInstances) {
-        if (variableInstances != null) {
-            for (VariableInstanceEntity variableInstance : variableInstances.values()) {
-                delete(variableInstance);
-            }
-        }
+    public void deleteVariablesByTaskId(String taskId) {
+        variableInstanceDataManager.deleteVariablesByTaskId(taskId);
+    }
+    
+    @Override
+    public void deleteVariablesByExecutionId(String executionId) {
+        variableInstanceDataManager.deleteVariablesByExecutionId(executionId);
+    }
+    
+    @Override
+    public void deleteByScopeIdAndScopeType(String scopeId, String scopeType) {
+        variableInstanceDataManager.deleteByScopeIdAndScopeType(scopeId, scopeType);
     }
 
     public VariableInstanceDataManager getVariableInstanceDataManager() {

@@ -15,8 +15,6 @@ package org.flowable.engine.test.bpmn.event.error.mapError;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.bind.JAXBException;
-
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.test.Deployment;
 import org.flowable.standalone.testing.helpers.ServiceTaskTestMock;
@@ -57,13 +55,24 @@ public class BoundaryErrorMapTest extends PluggableFlowableTestCase {
         assertTrue(FlagDelegate.isVisited());
     }
 
+    @Deployment
+    public void testRootCauseSingleDirectMap() {
+        FlagDelegate.reset();
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("exceptionClass", BoundaryErrorParentException.class.getName());
+        vars.put("nestedExceptionClass", IllegalArgumentException.class.getName());
+
+        runtimeService.startProcessInstanceByKey("processWithSingleExceptionMap", vars);
+        assertTrue(FlagDelegate.isVisited());
+    }
+
     // exception does not match the single mapping
     @Deployment(resources = "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testClassDelegateSingleDirectMap.bpmn20.xml")
     public void testClassDelegateSingleDirectMapNotMatchingException() {
         FlagDelegate.reset();
 
         Map<String, Object> vars = new HashMap<>();
-        vars.put("exceptionClass", JAXBException.class.getName());
+        vars.put("exceptionClass", IllegalStateException.class.getName());
         assertEquals(0, ServiceTaskTestMock.CALL_COUNT.get());
 
         try {
@@ -106,11 +115,58 @@ public class BoundaryErrorMapTest extends PluggableFlowableTestCase {
         }
     }
 
+    @Deployment(resources = "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testRootCauseSingleDirectMap.bpmn20.xml")
+    public void testRootCauseSingleDirectMapNotMatchingException() {
+        FlagDelegate.reset();
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("exceptionClass", BoundaryErrorParentException.class.getName());
+        vars.put("nestedExceptionClass", IllegalStateException.class.getName());
+        assertEquals(0, ServiceTaskTestMock.CALL_COUNT.get());
+
+        try {
+            runtimeService.startProcessInstanceByKey("processWithSingleExceptionMap", vars);
+            fail("exception expected, as there is no matching exception map");
+        } catch (Exception e) {
+            assertFalse(FlagDelegate.isVisited());
+        }
+    }
+
+    // exception matches by inheritance
+    @Deployment(resources = "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testClassDelegateSingleInheritedMapWithRootCause.bpmn20.xml")
+    public void testClassDelegateSingleInheritedMapWithRootCauseNotMatchingException() {
+        FlagDelegate.reset();
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("exceptionClass", BoundaryEventChildException.class.getName());
+        vars.put("nestedExceptionClass", IllegalStateException.class.getName());
+        assertEquals(0, ServiceTaskTestMock.CALL_COUNT.get());
+
+        try {
+            runtimeService.startProcessInstanceByKey("processWithSingleExceptionMap", vars);
+            fail("exception expected, as there is no matching exception map");
+        } catch (Exception e) {
+            assertFalse(FlagDelegate.isVisited());
+        }
+    }
+
     // exception matches by inheritance
     @Deployment
     public void testClassDelegateSingleInheritedMap() {
         Map<String, Object> vars = new HashMap<>();
         vars.put("exceptionClass", BoundaryEventChildException.class.getName());
+        FlagDelegate.reset();
+
+        runtimeService.startProcessInstanceByKey("processWithSingleExceptionMap", vars);
+        assertTrue(FlagDelegate.isVisited());
+    }
+
+    // exception matches by inheritance
+    @Deployment
+    public void testClassDelegateSingleInheritedMapWithRootCause() {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("exceptionClass", BoundaryEventChildException.class.getName());
+        vars.put("nestedExceptionClass", IllegalArgumentException.class.getName());
         FlagDelegate.reset();
 
         runtimeService.startProcessInstanceByKey("processWithSingleExceptionMap", vars);
@@ -168,7 +224,8 @@ public class BoundaryErrorMapTest extends PluggableFlowableTestCase {
         assertTrue(FlagDelegate.isVisited());
     }
 
-    @Deployment(resources = { "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testCallProcessSingleDirectMap.bpmn20.xml",
+    @Deployment(resources = {
+            "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testCallProcessSingleDirectMap.bpmn20.xml",
             "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testCallProcessCalee.bpmn20.xml" })
     public void testCallProcessSingleDirectMap() {
         FlagDelegate.reset();
@@ -179,7 +236,8 @@ public class BoundaryErrorMapTest extends PluggableFlowableTestCase {
         assertTrue(FlagDelegate.isVisited());
     }
 
-    @Deployment(resources = { "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testExpressionCallProcessSingleDirectMap.bpmn20.xml",
+    @Deployment(resources = {
+            "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testExpressionCallProcessSingleDirectMap.bpmn20.xml",
             "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testCallProcessExpressionSubProcess.bpmn20.xml" })
     public void testCallProcessExpressionSingleDirectMap() {
         FlagDelegate.reset();
@@ -190,7 +248,8 @@ public class BoundaryErrorMapTest extends PluggableFlowableTestCase {
         assertTrue(FlagDelegate.isVisited());
     }
 
-    @Deployment(resources = { "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testDelegateExpressionCallProcessSingleDirectMap.bpmn20.xml",
+    @Deployment(resources = {
+            "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testDelegateExpressionCallProcessSingleDirectMap.bpmn20.xml",
             "org/flowable/engine/test/bpmn/event/error/mapError/BoundaryErrorMapTest.testCallProcessDelegateExpressionSubProcess.bpmn20.xml" })
     public void testCallProcessDelegateExpressionSingleDirectMap() {
         FlagDelegate.reset();

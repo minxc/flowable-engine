@@ -14,7 +14,7 @@ package org.flowable.job.service.impl.persistence.entity.data;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.JobQueryImpl;
 import org.flowable.job.service.impl.persistence.entity.JobEntity;
@@ -28,4 +28,6 @@ public interface JobDataManager extends DataManager<JobEntity>, JobInfoDataManag
 
     long findJobCountByQueryCriteria(JobQueryImpl jobQuery);
 
+    void deleteJobsByExecutionId(String executionId);
+    
 }

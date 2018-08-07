@@ -12,22 +12,20 @@
  */
 package org.flowable.engine.impl;
 
-import java.sql.Connection;
-import java.util.List;
-import java.util.Map;
-
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.management.TableMetaData;
+import org.flowable.common.engine.api.management.TablePageQuery;
+import org.flowable.common.engine.impl.cmd.CustomSqlExecution;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.db.DbSqlSessionFactory;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandConfig;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.service.CommonEngineServiceImpl;
 import org.flowable.engine.ManagementService;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.management.TableMetaData;
-import org.flowable.engine.common.api.management.TablePageQuery;
-import org.flowable.engine.common.impl.cmd.CustomSqlExecution;
-import org.flowable.engine.common.impl.db.DbSqlSession;
-import org.flowable.engine.common.impl.db.DbSqlSessionFactory;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandConfig;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.event.EventLogEntry;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.cmd.DeleteEventLogEntry;
 import org.flowable.engine.impl.cmd.ExecuteCustomSqlCmd;
 import org.flowable.engine.impl.cmd.GetEventLogEntriesCmd;
@@ -53,14 +51,20 @@ import org.flowable.job.service.impl.cmd.DeleteHistoryJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteSuspendedJobCmd;
 import org.flowable.job.service.impl.cmd.DeleteTimerJobCmd;
+import org.flowable.job.service.impl.cmd.ExecuteHistoryJobCmd;
 import org.flowable.job.service.impl.cmd.ExecuteJobCmd;
 import org.flowable.job.service.impl.cmd.GetJobExceptionStacktraceCmd;
 import org.flowable.job.service.impl.cmd.JobType;
 import org.flowable.job.service.impl.cmd.MoveDeadLetterJobToExecutableJobCmd;
 import org.flowable.job.service.impl.cmd.MoveJobToDeadLetterJobCmd;
+import org.flowable.job.service.impl.cmd.MoveSuspendedJobToExecutableJobCmd;
 import org.flowable.job.service.impl.cmd.MoveTimerToExecutableJobCmd;
 import org.flowable.job.service.impl.cmd.SetJobRetriesCmd;
 import org.flowable.job.service.impl.cmd.SetTimerJobRetriesCmd;
+
+import java.sql.Connection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Tom Baeyens
@@ -68,8 +72,8 @@ import org.flowable.job.service.impl.cmd.SetTimerJobRetriesCmd;
  * @author Falko Menge
  * @author Saeid Mizaei
  */
-public class ManagementServiceImpl extends ServiceImpl implements ManagementService {
-
+public class ManagementServiceImpl extends CommonEngineServiceImpl<ProcessEngineConfigurationImpl> implements ManagementService {
+    
     @Override
     public Map<String, Long> getTableCount() {
         return commandExecutor.execute(new GetTableCountCmd());
@@ -87,10 +91,6 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
 
     @Override
     public void executeJob(String jobId) {
-        if (jobId == null) {
-            throw new FlowableIllegalArgumentException("JobId is null");
-        }
-
         try {
             commandExecutor.execute(new ExecuteJobCmd(jobId));
 
@@ -101,6 +101,11 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
                 throw new FlowableException("Job " + jobId + " failed", e);
             }
         }
+    }
+    
+    @Override
+    public void executeHistoryJob(String historyJobId) {
+        commandExecutor.execute(new ExecuteHistoryJobCmd(historyJobId));
     }
 
     @Override
@@ -116,6 +121,11 @@ public class ManagementServiceImpl extends ServiceImpl implements ManagementServ
     @Override
     public Job moveDeadLetterJobToExecutableJob(String jobId, int retries) {
         return commandExecutor.execute(new MoveDeadLetterJobToExecutableJobCmd(jobId, retries));
+    }
+
+    @Override
+    public Job moveSuspendedJobToExecutableJob(String jobId) {
+        return commandExecutor.execute(new MoveSuspendedJobToExecutableJobCmd(jobId));
     }
 
     @Override

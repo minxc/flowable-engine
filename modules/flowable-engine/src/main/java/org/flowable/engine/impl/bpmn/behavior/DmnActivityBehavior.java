@@ -18,19 +18,20 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.FieldExtension;
 import org.flowable.bpmn.model.Task;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.delegate.Expression;
+import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.dmn.api.DecisionExecutionAuditContainer;
 import org.flowable.dmn.api.DmnRuleService;
 import org.flowable.engine.DynamicBpmnConstants;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.delegate.Expression;
-import org.flowable.engine.common.impl.el.ExpressionManager;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.DelegateHelper;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.context.BpmnOverrideContext;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.ProcessDefinitionUtil;
+import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -91,12 +92,13 @@ public class DmnActivityBehavior extends TaskActivityBehavior {
         }
 
         ProcessDefinition processDefinition = ProcessDefinitionUtil.getProcessDefinition(execution.getProcessDefinitionId());
+        Deployment deployment = CommandContextUtil.getDeploymentEntityManager().findById(processDefinition.getDeploymentId());
 
         DmnRuleService ruleService = CommandContextUtil.getDmnRuleService();
 
         DecisionExecutionAuditContainer decisionExecutionAuditContainer = ruleService.createExecuteDecisionBuilder()
                 .decisionKey(finaldecisionTableKeyValue)
-                .parentDeploymentId(processDefinition.getDeploymentId())
+                .parentDeploymentId(deployment.getParentDeploymentId())
                 .instanceId(execution.getProcessInstanceId())
                 .executionId(execution.getId())
                 .activityId(task.getId())

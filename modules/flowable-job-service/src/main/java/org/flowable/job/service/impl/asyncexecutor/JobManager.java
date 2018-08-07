@@ -48,7 +48,7 @@ public interface JobManager {
     /**
      * Creates an async job so that it can be continued later in a background thread.
      */
-    void setAsyncJobProperties(JobEntity jobEntity, boolean exclusive);
+    void createAsyncJob(JobEntity jobEntity, boolean exclusive);
 
     /**
      * Schedules and async job. If the {@link AsyncExecutor} is running, it can be executed immediately after the transaction. Otherwise it can be picked up by other executors.
@@ -109,5 +109,29 @@ public interface JobManager {
      * The ProcessEngineConfiguration instance will be passed when the ProcessEngine is built.
      */
     void setJobServiceConfiguration(JobServiceConfiguration jobServiceConfiguration);
+    
+    /**
+     * Create an executable job from another job
+     */
+    JobEntity createExecutableJobFromOtherJob(AbstractRuntimeJobEntity job);
 
+    /**
+     * Create a timer job from another job
+     */
+    TimerJobEntity createTimerJobFromOtherJob(AbstractRuntimeJobEntity otherJob);
+
+    /**
+     * Create a suspended job from another job
+     */
+    SuspendedJobEntity createSuspendedJobFromOtherJob(AbstractRuntimeJobEntity otherJob);
+
+    /**
+     * Create a dead letter job from another job
+     */
+    DeadLetterJobEntity createDeadLetterJobFromOtherJob(AbstractRuntimeJobEntity otherJob);
+
+    /**
+     * Copy job info from one job to the other
+     */
+    AbstractRuntimeJobEntity copyJobInfo(AbstractRuntimeJobEntity copyToJob, AbstractRuntimeJobEntity copyFromJob);
 }

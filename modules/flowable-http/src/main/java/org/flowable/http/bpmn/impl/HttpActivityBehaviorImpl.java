@@ -12,6 +12,19 @@
  */
 package org.flowable.http.bpmn.impl;
 
+import static org.flowable.bpmn.model.ImplementationType.IMPLEMENTATION_TYPE_CLASS;
+import static org.flowable.bpmn.model.ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION;
+import static org.flowable.http.ExpressionUtils.getBooleanFromField;
+import static org.flowable.http.ExpressionUtils.getIntFromField;
+import static org.flowable.http.ExpressionUtils.getStringFromField;
+import static org.flowable.http.ExpressionUtils.getStringSetFromField;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -25,9 +38,9 @@ import org.flowable.bpmn.model.HttpServiceTask;
 import org.flowable.bpmn.model.ImplementationType;
 import org.flowable.bpmn.model.MapExceptionEntry;
 import org.flowable.bpmn.model.ServiceTask;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.cfg.HttpClientConfig;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
 import org.flowable.engine.impl.bpmn.parser.FieldDeclaration;
@@ -43,22 +56,11 @@ import org.flowable.http.delegate.HttpResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.flowable.bpmn.model.ImplementationType.IMPLEMENTATION_TYPE_CLASS;
-import static org.flowable.bpmn.model.ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION;
-import static org.flowable.http.ExpressionUtils.getBooleanFromField;
-import static org.flowable.http.ExpressionUtils.getIntFromField;
-import static org.flowable.http.ExpressionUtils.getStringFromField;
-import static org.flowable.http.ExpressionUtils.getStringSetFromField;
-
 /**
  * Implementation of HttpActivityBehavior using Apache HTTP Client
  *
  * @author Harsha Teja Kanna.
+ * @author Joram Barrez
  */
 public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
 
@@ -75,6 +77,8 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
     protected Expression requestHeaders;
     // HttpRequest body expression (Optional)
     protected Expression requestBody;
+    // HttpRequest body encoding expression, for example UTF-8 (Optional)
+    protected Expression requestBodyEncoding;
     // Timeout in seconds for the body (Optional)
     protected Expression requestTimeout;
     // HttpRequest retry disable HTTP redirects (Optional)
@@ -85,12 +89,16 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
     protected Expression handleStatusCodes;
     // Flag to ignore exceptions (Optional)
     protected Expression ignoreException;
-    // Flag to save request variables. default is false (Optional)
+    // Flag to save request variables. Default is false (Optional)
     protected Expression saveRequestVariables;
-    // Flag to save response variables. default is false (Optional)
+    // Flag to save response variables. Default is false (Optional)
     protected Expression saveResponseParameters;
     // Variable name for response body
     protected Expression responseVariableName;
+    // Flag to save the response variables as a transient variable. Default is false (Optional).
+    protected Expression saveResponseParametersTransient;
+    // Flag to save the response variable as an ObjectNode instead of a String
+    protected Expression saveResponseVariableAsJson;
     // Prefix for the execution variable names (Optional)
     protected Expression resultVariablePrefix;
     // Exception mapping
@@ -128,7 +136,8 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
         }
         httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount, false));
 
-        this.httpActivityExecutor = new HttpActivityExecutor(httpClientBuilder, new ProcessErrorPropagator());
+        this.httpActivityExecutor = new HttpActivityExecutor(httpClientBuilder, new ProcessErrorPropagator(), 
+                CommandContextUtil.getProcessEngineConfiguration().getObjectMapper());
     }
 
     @Override
@@ -141,11 +150,14 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
             request.setUrl(getStringFromField(requestUrl, execution));
             request.setHeaders(getStringFromField(requestHeaders, execution));
             request.setBody(getStringFromField(requestBody, execution));
+            request.setBodyEncoding(getStringFromField(requestBodyEncoding, execution));
             request.setTimeout(getIntFromField(requestTimeout, execution));
             request.setNoRedirects(getBooleanFromField(disallowRedirects, execution));
             request.setIgnoreErrors(getBooleanFromField(ignoreException, execution));
             request.setSaveRequest(getBooleanFromField(saveRequestVariables, execution));
             request.setSaveResponse(getBooleanFromField(saveResponseParameters, execution));
+            request.setSaveResponseTransient(getBooleanFromField(saveResponseParametersTransient, execution));
+            request.setSaveResponseAsJson(getBooleanFromField(saveResponseVariableAsJson, execution));
             request.setPrefix(getStringFromField(resultVariablePrefix, execution));
 
             String failCodes = getStringFromField(failStatusCodes, execution);
@@ -164,17 +176,17 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
 
             // Save request fields
             if (request.isSaveRequest()) {
-                execution.setVariable(request.getPrefix() + ".requestMethod", request.getMethod());
-                execution.setVariable(request.getPrefix() + ".requestUrl", request.getUrl());
-                execution.setVariable(request.getPrefix() + ".requestHeaders", request.getHeaders());
-                execution.setVariable(request.getPrefix() + ".requestBody", request.getBody());
-                execution.setVariable(request.getPrefix() + ".requestTimeout", request.getTimeout());
-                execution.setVariable(request.getPrefix() + ".disallowRedirects", request.isNoRedirects());
-                execution.setVariable(request.getPrefix() + ".failStatusCodes", failCodes);
-                execution.setVariable(request.getPrefix() + ".handleStatusCodes", handleCodes);
-                execution.setVariable(request.getPrefix() + ".ignoreException", request.isIgnoreErrors());
-                execution.setVariable(request.getPrefix() + ".saveRequestVariables", request.isSaveRequest());
-                execution.setVariable(request.getPrefix() + ".saveResponseParameters", request.isSaveResponse());
+                execution.setVariable(request.getPrefix() + "RequestMethod", request.getMethod());
+                execution.setVariable(request.getPrefix() + "RequestUrl", request.getUrl());
+                execution.setVariable(request.getPrefix() + "RequestHeaders", request.getHeaders());
+                execution.setVariable(request.getPrefix() + "RequestBody", request.getBody());
+                execution.setVariable(request.getPrefix() + "RequestTimeout", request.getTimeout());
+                execution.setVariable(request.getPrefix() + "DisallowRedirects", request.isNoRedirects());
+                execution.setVariable(request.getPrefix() + "FailStatusCodes", failCodes);
+                execution.setVariable(request.getPrefix() + "HandleStatusCodes", handleCodes);
+                execution.setVariable(request.getPrefix() + "IgnoreException", request.isIgnoreErrors());
+                execution.setVariable(request.getPrefix() + "SaveRequestVariables", request.isSaveRequest());
+                execution.setVariable(request.getPrefix() + "SaveResponseParameters", request.isSaveResponse());
             }
 
         } catch (Exception e) {
@@ -186,17 +198,21 @@ public class HttpActivityBehaviorImpl extends AbstractBpmnActivityBehavior {
         }
 
         httpActivityExecutor.validate(request);
+        
+        ProcessEngineConfigurationImpl processEngineConfiguration = CommandContextUtil.getProcessEngineConfiguration();
+        HttpClientConfig httpClientConfig = CommandContextUtil.getProcessEngineConfiguration().getHttpClientConfig();
 
-        httpActivityExecutor.execute(request,
+        httpActivityExecutor.execute(
+                request,
                 execution,
                 execution.getId(),
-                createHttpRequestHandler(httpServiceTask.getHttpRequestHandler(), CommandContextUtil.getProcessEngineConfiguration()),
-                createHttpResponseHandler(httpServiceTask.getHttpResponseHandler(), CommandContextUtil.getProcessEngineConfiguration()),
+                createHttpRequestHandler(httpServiceTask.getHttpRequestHandler(), processEngineConfiguration),
+                createHttpResponseHandler(httpServiceTask.getHttpResponseHandler(), processEngineConfiguration),
                 getStringFromField(responseVariableName, execution),
                 mapExceptions,
-                CommandContextUtil.getProcessEngineConfiguration().getHttpClientConfig().getSocketTimeout(),
-                CommandContextUtil.getProcessEngineConfiguration().getHttpClientConfig().getConnectTimeout(),
-                CommandContextUtil.getProcessEngineConfiguration().getHttpClientConfig().getConnectionRequestTimeout());
+                httpClientConfig.getSocketTimeout(),
+                httpClientConfig.getConnectTimeout(),
+                httpClientConfig.getConnectionRequestTimeout());
 
         leave(execution);
     }

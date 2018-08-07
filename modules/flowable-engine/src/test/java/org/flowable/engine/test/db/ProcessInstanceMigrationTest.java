@@ -15,11 +15,11 @@ package org.flowable.engine.test.db;
 
 import java.util.List;
 
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.common.impl.history.HistoryLevel;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.cmd.SetProcessDefinitionVersionCmd;
@@ -156,7 +156,7 @@ public class ProcessInstanceMigrationTest extends PluggableFlowableTestCase {
         assertNotNull(execution);
 
         // deploy new version of the process definition
-        org.flowable.engine.repository.Deployment deployment = repositoryService.createDeployment().addClasspathResource(TEST_PROCESS).deploy();
+        repositoryService.createDeployment().addClasspathResource(TEST_PROCESS).deploy();
         assertEquals(2, repositoryService.createProcessDefinitionQuery().count());
 
         // migrate process instance to new process definition version
@@ -253,7 +253,7 @@ public class ProcessInstanceMigrationTest extends PluggableFlowableTestCase {
             assertEquals(1, taskService.createTaskQuery().processInstanceId(pi.getId()).count());
 
             // deploy new version of the process definition
-            org.flowable.engine.repository.Deployment deployment = repositoryService.createDeployment().addClasspathResource(TEST_PROCESS_USER_TASK_V2).deploy();
+            repositoryService.createDeployment().addClasspathResource(TEST_PROCESS_USER_TASK_V2).deploy();
             assertEquals(2, repositoryService.createProcessDefinitionQuery().processDefinitionKey("userTask").count());
 
             ProcessDefinition newProcessDefinition = repositoryService.createProcessDefinitionQuery().processDefinitionKey("userTask").processDefinitionVersion(2).singleResult();

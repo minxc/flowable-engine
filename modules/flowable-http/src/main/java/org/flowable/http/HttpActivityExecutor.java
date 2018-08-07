@@ -12,6 +12,19 @@
  */
 package org.flowable.http;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.List;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpMessage;
@@ -23,27 +36,22 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.flowable.bpmn.model.MapExceptionEntry;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.variable.VariableContainer;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.variable.VariableContainer;
+import org.flowable.engine.delegate.BpmnError;
+import org.flowable.engine.delegate.DelegateExecution;
+import org.flowable.engine.impl.bpmn.helper.ErrorPropagation;
 import org.flowable.http.delegate.HttpRequestHandler;
 import org.flowable.http.delegate.HttpResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * An executor behavior for HTTP requests.
@@ -55,8 +63,6 @@ public class HttpActivityExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpActivityExecutor.class);
 
-    private static final long serialVersionUID = 1L;
-
     // Validation constants
     public static final String HTTP_TASK_REQUEST_METHOD_REQUIRED = "requestMethod is required";
     public static final String HTTP_TASK_REQUEST_METHOD_INVALID = "requestMethod is invalid";
@@ -67,13 +73,15 @@ public class HttpActivityExecutor {
     protected final Timer timer = new Timer(true);
     protected final HttpClientBuilder clientBuilder;
     protected final ErrorPropagator errorPropagator;
+    protected ObjectMapper objectMapper;
 
-    public HttpActivityExecutor(HttpClientBuilder clientBuilder, ErrorPropagator errorPropagator) {
+    public HttpActivityExecutor(HttpClientBuilder clientBuilder, ErrorPropagator errorPropagator, ObjectMapper objectMapper) {
         this.clientBuilder = clientBuilder;
         this.errorPropagator = errorPropagator;
+        this.objectMapper = objectMapper;
     }
 
-    public void execute(HttpRequest request, VariableContainer execution, String executionId,
+    public void execute(HttpRequest request, VariableContainer variableContainer, String executionId,
                         HttpRequestHandler flowableHttpRequestHandler, HttpResponseHandler flowableHttpResponseHandler,
                         String responseVariableName,
                         List<MapExceptionEntry> mapExceptions, int socketTimeout, int connectTimeout, int connectionRequestTimeout) {
@@ -82,9 +90,8 @@ public class HttpActivityExecutor {
         CloseableHttpClient client = null;
         try {
             client = clientBuilder.build();
-            LOGGER.debug("HTTP client is initialized");
 
-            HttpResponse response = perform(client, execution, request, flowableHttpRequestHandler, flowableHttpResponseHandler,
+            HttpResponse response = perform(client, variableContainer, request, flowableHttpRequestHandler, flowableHttpResponseHandler,
                     socketTimeout,
                     connectTimeout,
                     connectionRequestTimeout);
@@ -92,17 +99,26 @@ public class HttpActivityExecutor {
             if (response != null) {
                 // Save response body only by default
                 if (request.isSaveResponse()) {
-                    execution.setVariable(request.getPrefix() + ".responseProtocol", response.getProtocol());
-                    execution.setVariable(request.getPrefix() + ".responseStatusCode", response.getStatusCode());
-                    execution.setVariable(request.getPrefix() + ".responseReason", response.getReason());
-                    execution.setVariable(request.getPrefix() + ".responseHeaders", response.getHeaders());
+                    if (request.isSaveResponseTransient()) {
+                        variableContainer.setTransientVariable(request.getPrefix() + "ResponseProtocol", response.getProtocol());
+                        variableContainer.setTransientVariable(request.getPrefix() + "ResponseStatusCode", response.getStatusCode());
+                        variableContainer.setTransientVariable(request.getPrefix() + "ResponseReason", response.getReason());
+                        variableContainer.setTransientVariable(request.getPrefix() + "ResponseHeaders", response.getHeaders());
+                    } else {
+                        variableContainer.setVariable(request.getPrefix() + "ResponseProtocol", response.getProtocol());
+                        variableContainer.setVariable(request.getPrefix() + "ResponseStatusCode", response.getStatusCode());
+                        variableContainer.setVariable(request.getPrefix() + "ResponseReason", response.getReason());
+                        variableContainer.setVariable(request.getPrefix() + "ResponseHeaders", response.getHeaders());
+                    }
                 }
 
                 if (!response.isBodyResponseHandled()) {
-                    if (StringUtils.isNotEmpty(responseVariableName)) {
-                        execution.setVariable(responseVariableName, response.getBody());
+                    String varName = StringUtils.isNotEmpty(responseVariableName) ? responseVariableName : request.getPrefix() + "ResponseBody";
+                    Object varValue = request.isSaveResponseAsJson() ? objectMapper.readTree(response.getBody()) : response.getBody();
+                    if (request.isSaveResponseTransient()) {
+                        variableContainer.setTransientVariable(varName, varValue);
                     } else {
-                        execution.setVariable(request.getPrefix() + ".responseBody", response.getBody());
+                        variableContainer.setVariable(varName, varValue);
                     }
                 }
 
@@ -118,7 +134,7 @@ public class HttpActivityExecutor {
                                 || (code.startsWith("4") && handleCodes.contains("4XX"))
                                 || (code.startsWith("3") && handleCodes.contains("3XX"))) {
 
-                            errorPropagator.propagateError(execution, code);
+                            errorPropagator.propagateError(variableContainer, code);
                             return;
                         }
                     }
@@ -139,9 +155,9 @@ public class HttpActivityExecutor {
         } catch (Exception e) {
             if (request.isIgnoreErrors()) {
                 LOGGER.info("Error ignored while processing http task in execution {}", executionId, e);
-                execution.setVariable(request.getPrefix() + ".errorMessage", e.getMessage());
+                variableContainer.setVariable(request.getPrefix() + "ErrorMessage", e.getMessage());
             } else {
-                if (!errorPropagator.mapException(e, execution, mapExceptions)) {
+                if (!errorPropagator.mapException(e, variableContainer, mapExceptions)) {
                     if (e instanceof FlowableException) {
                         throw (FlowableException) e;
                     } else {
@@ -195,32 +211,45 @@ public class HttpActivityExecutor {
                 httpRequestHandler.handleHttpRequest(execution, requestInfo, client);
             }
         } catch (Exception e) {
+            if (e instanceof BpmnError) {
+                ErrorPropagation.propagateError(((BpmnError) e), ((DelegateExecution) execution));
+                return null;
+            }
+
             throw new FlowableException("Exception while invoking HttpRequestHandler: " + e.getMessage(), e);
         }
 
         try {
-            URIBuilder uri = new URIBuilder(requestInfo.getUrl());
+            URI uri = ensureUrlIsEncodedAndConvertToUri(new URL(requestInfo.getUrl()));
             switch (requestInfo.getMethod()) {
                 case "GET": {
-                    request = new HttpGet(uri.toString());
+                    request = new HttpGet(uri);
                     break;
                 }
                 case "POST": {
-                    HttpPost post = new HttpPost(uri.toString());
+                    HttpPost post = new HttpPost(uri);
                     if (requestInfo.getBody() != null) {
-                        post.setEntity(new StringEntity(requestInfo.getBody()));
+                        if (StringUtils.isNotEmpty(requestInfo.getBodyEncoding())) {
+                            post.setEntity(new StringEntity(requestInfo.getBody(), requestInfo.getBodyEncoding()));
+                        } else {
+                            post.setEntity(new StringEntity(requestInfo.getBody()));
+                        }
                     }
                     request = post;
                     break;
                 }
                 case "PUT": {
-                    HttpPut put = new HttpPut(uri.toString());
-                    put.setEntity(new StringEntity(requestInfo.getBody()));
+                    HttpPut put = new HttpPut(uri);
+                    if (StringUtils.isNotEmpty(requestInfo.getBodyEncoding())) {
+                        put.setEntity(new StringEntity(requestInfo.getBody(), requestInfo.getBodyEncoding()));
+                    } else {
+                        put.setEntity(new StringEntity(requestInfo.getBody()));
+                    }
                     request = put;
                     break;
                 }
                 case "DELETE": {
-                    request = new HttpDelete(uri.toString());
+                    request = new HttpDelete(uri);
                     break;
                 }
                 default: {
@@ -264,6 +293,11 @@ public class HttpActivityExecutor {
                     httpResponseHandler.handleHttpResponse(execution, responseInfo);
                 }
             } catch (Exception e) {
+                if (e instanceof BpmnError) {
+                    ErrorPropagation.propagateError(((BpmnError) e), ((DelegateExecution) execution));
+                    return null;
+                }
+
                 throw new FlowableException("Exception while invoking HttpResponseHandler: " + e.getMessage(), e);
             }
 
@@ -289,7 +323,7 @@ public class HttpActivityExecutor {
     protected void setConfig(final HttpRequestBase base, final HttpRequest requestInfo, int socketTimeout, int connectTimeout, int connectionRequestTimeout) {
         base.setConfig(RequestConfig.custom()
                 .setRedirectsEnabled(!requestInfo.isNoRedirects())
-                .setSocketTimeout(socketTimeout)
+                .setSocketTimeout(requestInfo.getTimeout() == 0 ? socketTimeout : requestInfo.getTimeout())
                 .setConnectTimeout(connectTimeout)
                 .setConnectionRequestTimeout(connectionRequestTimeout)
                 .build());
@@ -321,6 +355,25 @@ public class HttpActivityExecutor {
                     throw new FlowableException(HTTP_TASK_REQUEST_HEADERS_INVALID);
                 }
             }
+        }
+    }
+
+    protected URI ensureUrlIsEncodedAndConvertToUri(URL url) throws URISyntaxException {
+        String decodedPath = decode(url.getPath());
+        String decodedQuery = decode(url.getQuery());
+        String decodedRef = decode(url.getRef());
+
+        return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), decodedPath, decodedQuery, decodedRef);
+    }
+
+    protected String decode(String string) {
+        if (string == null) {
+            return null;
+        }
+        try {
+            return URLDecoder.decode(string, "UTF-8");
+        } catch (UnsupportedEncodingException unsupportedEncodingException) {
+            throw new IllegalStateException("JVM does not support UTF-8 encoding.", unsupportedEncodingException);
         }
     }
 

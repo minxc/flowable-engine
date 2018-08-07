@@ -15,6 +15,12 @@ package org.flowable.engine.impl.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.common.engine.impl.persistence.cache.EntityCache;
 import org.flowable.content.api.ContentEngineConfigurationApi;
 import org.flowable.content.api.ContentService;
 import org.flowable.dmn.api.DmnEngineConfigurationApi;
@@ -22,12 +28,6 @@ import org.flowable.dmn.api.DmnManagementService;
 import org.flowable.dmn.api.DmnRepositoryService;
 import org.flowable.dmn.api.DmnRuleService;
 import org.flowable.engine.FlowableEngineAgenda;
-import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.engine.common.impl.context.Context;
-import org.flowable.engine.common.impl.db.DbSqlSession;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
-import org.flowable.engine.common.impl.persistence.cache.EntityCache;
 import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.history.HistoryManager;
 import org.flowable.engine.impl.persistence.entity.AttachmentEntityManager;
@@ -54,15 +54,15 @@ import org.flowable.form.api.FormService;
 import org.flowable.identitylink.service.HistoricIdentityLinkService;
 import org.flowable.identitylink.service.IdentityLinkService;
 import org.flowable.identitylink.service.IdentityLinkServiceConfiguration;
+import org.flowable.idm.api.IdmEngineConfigurationApi;
 import org.flowable.idm.api.IdmIdentityService;
-import org.flowable.idm.engine.IdmEngineConfiguration;
-import org.flowable.idm.engine.impl.persistence.entity.PrivilegeEntityManager;
 import org.flowable.job.service.HistoryJobService;
 import org.flowable.job.service.JobService;
 import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.TimerJobService;
 import org.flowable.job.service.impl.asyncexecutor.FailedJobCommandFactory;
 import org.flowable.task.service.HistoricTaskService;
+import org.flowable.task.service.InternalTaskAssignmentManager;
 import org.flowable.task.service.TaskService;
 import org.flowable.task.service.TaskServiceConfiguration;
 import org.flowable.variable.service.HistoricVariableService;
@@ -90,10 +90,15 @@ public class CommandContextUtil {
     }
     
     public static VariableServiceConfiguration getVariableServiceConfiguration(CommandContext commandContext) {
-        return (VariableServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_VARIABLE_SERVICE_CONFIG);
+        return (VariableServiceConfiguration) getProcessEngineConfiguration(commandContext).getServiceConfigurations()
+                        .get(EngineConfigurationConstants.KEY_VARIABLE_SERVICE_CONFIG);
     }
     
     public static VariableService getVariableService() {
+        return getVariableService(getCommandContext());
+    }
+    
+    public static VariableService getVariableService(CommandContext commandContext) {
         VariableService variableService = null;
         VariableServiceConfiguration variableServiceConfiguration = getVariableServiceConfiguration();
         if (variableServiceConfiguration != null) {
@@ -119,12 +124,17 @@ public class CommandContextUtil {
     }
     
     public static IdentityLinkServiceConfiguration getIdentityLinkServiceConfiguration(CommandContext commandContext) {
-        return (IdentityLinkServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_IDENTITY_LINK_SERVICE_CONFIG);
+        return (IdentityLinkServiceConfiguration) getProcessEngineConfiguration(commandContext).getServiceConfigurations()
+                        .get(EngineConfigurationConstants.KEY_IDENTITY_LINK_SERVICE_CONFIG);
     }
     
     public static IdentityLinkService getIdentityLinkService() {
+        return getIdentityLinkService(getCommandContext());
+    }
+    
+    public static IdentityLinkService getIdentityLinkService(CommandContext commandContext) {
         IdentityLinkService identityLinkService = null;
-        IdentityLinkServiceConfiguration identityLinkServiceConfiguration = getIdentityLinkServiceConfiguration();
+        IdentityLinkServiceConfiguration identityLinkServiceConfiguration = getIdentityLinkServiceConfiguration(commandContext);
         if (identityLinkServiceConfiguration != null) {
             identityLinkService = identityLinkServiceConfiguration.getIdentityLinkService();
         }
@@ -148,7 +158,8 @@ public class CommandContextUtil {
     }
     
     public static TaskServiceConfiguration getTaskServiceConfiguration(CommandContext commandContext) {
-        return (TaskServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_TASK_SERVICE_CONFIG);
+        return (TaskServiceConfiguration) getProcessEngineConfiguration(commandContext).getServiceConfigurations()
+                        .get(EngineConfigurationConstants.KEY_TASK_SERVICE_CONFIG);
     }
     
     public static TaskService getTaskService() {
@@ -180,7 +191,8 @@ public class CommandContextUtil {
     }
     
     public static JobServiceConfiguration getJobServiceConfiguration(CommandContext commandContext) {
-        return (JobServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_JOB_SERVICE_CONFIG);
+        return (JobServiceConfiguration) getProcessEngineConfiguration(commandContext).getServiceConfigurations()
+                        .get(EngineConfigurationConstants.KEY_JOB_SERVICE_CONFIG);
     }
     
     public static JobService getJobService() {
@@ -227,17 +239,17 @@ public class CommandContextUtil {
     
     // IDM ENGINE
     
-    public static IdmEngineConfiguration getIdmEngineConfiguration() {
+    public static IdmEngineConfigurationApi getIdmEngineConfiguration() {
         return getIdmEngineConfiguration(getCommandContext());
     }
     
-    public static IdmEngineConfiguration getIdmEngineConfiguration(CommandContext commandContext) {
-        return (IdmEngineConfiguration) commandContext.getEngineConfigurations().get(EngineConfigurationConstants.KEY_IDM_ENGINE_CONFIG);
+    public static IdmEngineConfigurationApi getIdmEngineConfiguration(CommandContext commandContext) {
+        return (IdmEngineConfigurationApi) commandContext.getEngineConfigurations().get(EngineConfigurationConstants.KEY_IDM_ENGINE_CONFIG);
     }
     
     public static IdmIdentityService getIdmIdentityService() {
         IdmIdentityService idmIdentityService = null;
-        IdmEngineConfiguration idmEngineConfiguration = getIdmEngineConfiguration();
+        IdmEngineConfigurationApi idmEngineConfiguration = getIdmEngineConfiguration();
         if (idmEngineConfiguration != null) {
             idmIdentityService = idmEngineConfiguration.getIdmIdentityService();
         }
@@ -469,14 +481,6 @@ public class CommandContextUtil {
         return getProcessEngineConfiguration(commandContext).getEventSubscriptionEntityManager();
     }
     
-    public static PrivilegeEntityManager getPrivilegeEntityManager() {
-        return getPrivilegeEntityManager(getCommandContext());
-    }
-    
-    public static PrivilegeEntityManager getPrivilegeEntityManager(CommandContext commandContext) {
-        return getIdmEngineConfiguration(commandContext).getPrivilegeEntityManager();
-    }
-    
     public static CommentEntityManager getCommentEntityManager() {
         return getCommentEntityManager(getCommandContext());
     }
@@ -567,6 +571,14 @@ public class CommandContextUtil {
     
     public static CommandContext getCommandContext() {
         return Context.getCommandContext();
+    }
+
+    public static InternalTaskAssignmentManager getInternalTaskAssignmentManager(CommandContext commandContext) {
+        return getTaskServiceConfiguration(commandContext).getInternalTaskAssignmentManager();
+    }
+
+    public static InternalTaskAssignmentManager getInternalTaskAssignmentManager() {
+        return getInternalTaskAssignmentManager(getCommandContext());
     }
 
 }

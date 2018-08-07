@@ -12,10 +12,10 @@
  */
 package org.flowable.variable.service.event.impl;
 
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEntityEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEvent;
-import org.flowable.engine.common.impl.event.FlowableEntityEventImpl;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEntityEvent;
+import org.flowable.common.engine.api.delegate.event.FlowableEvent;
+import org.flowable.common.engine.impl.event.FlowableEntityEventImpl;
 import org.flowable.variable.api.event.FlowableVariableEvent;
 import org.flowable.variable.api.types.VariableType;
 
@@ -41,8 +41,8 @@ public class FlowableVariableEventBuilder {
     }
 
     public static FlowableVariableEvent createVariableEvent(FlowableEngineEventType type, String variableName, Object variableValue, VariableType variableType, String taskId, String executionId,
-            String processInstanceId, String processDefinitionId) {
-        
+            String processInstanceId, String processDefinitionId, String scopeId, String scopeType) {
+
         FlowableVariableEventImpl newEvent = new FlowableVariableEventImpl(type);
         newEvent.setVariableName(variableName);
         newEvent.setVariableValue(variableValue);
@@ -51,6 +51,8 @@ public class FlowableVariableEventBuilder {
         newEvent.setExecutionId(executionId);
         newEvent.setProcessDefinitionId(processDefinitionId);
         newEvent.setProcessInstanceId(processInstanceId);
+        newEvent.setScopeId(scopeId);
+        newEvent.setScopeType(scopeType);
         return newEvent;
     }
 }

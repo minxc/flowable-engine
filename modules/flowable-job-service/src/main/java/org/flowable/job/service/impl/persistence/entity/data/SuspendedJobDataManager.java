@@ -14,7 +14,7 @@ package org.flowable.job.service.impl.persistence.entity.data;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.SuspendedJobQueryImpl;
 import org.flowable.job.service.impl.persistence.entity.SuspendedJobEntity;
@@ -33,4 +33,5 @@ public interface SuspendedJobDataManager extends DataManager<SuspendedJobEntity>
     long findJobCountByQueryCriteria(SuspendedJobQueryImpl jobQuery);
 
     void updateJobTenantIdForDeployment(String deploymentId, String newTenantId);
+    
 }

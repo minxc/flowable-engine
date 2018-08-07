@@ -12,11 +12,11 @@
  */
 package org.flowable.job.service.impl.util;
 
-import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.engine.common.impl.context.Context;
-import org.flowable.engine.common.impl.db.DbSqlSession;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.impl.asyncexecutor.JobManager;
 import org.flowable.job.service.impl.persistence.entity.DeadLetterJobEntityManager;
@@ -34,7 +34,8 @@ public class CommandContextUtil {
     
     public static JobServiceConfiguration getJobServiceConfiguration(CommandContext commandContext) {
         if (commandContext != null) {
-            return (JobServiceConfiguration) commandContext.getServiceConfigurations().get(EngineConfigurationConstants.KEY_JOB_SERVICE_CONFIG);
+            return (JobServiceConfiguration) commandContext.getCurrentEngineConfiguration().getServiceConfigurations()
+                            .get(EngineConfigurationConstants.KEY_JOB_SERVICE_CONFIG);
         }
         return null;
     }

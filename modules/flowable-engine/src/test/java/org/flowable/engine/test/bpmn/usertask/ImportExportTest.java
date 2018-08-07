@@ -17,8 +17,8 @@ import java.io.InputStream;
 
 import org.flowable.bpmn.converter.BpmnXMLConverter;
 import org.flowable.bpmn.model.BpmnModel;
-import org.flowable.engine.common.impl.util.io.InputStreamSource;
-import org.flowable.engine.common.impl.util.io.StreamSource;
+import org.flowable.common.engine.impl.util.io.InputStreamSource;
+import org.flowable.common.engine.impl.util.io.StreamSource;
 import org.flowable.engine.impl.test.ResourceFlowableTestCase;
 import org.flowable.engine.runtime.Execution;
 
@@ -37,7 +37,7 @@ public class ImportExportTest extends ResourceFlowableTestCase {
 
         byte[] xml = new BpmnXMLConverter().convertToXML(bpmnModel);
 
-        org.flowable.engine.repository.Deployment deployment = processEngine.getRepositoryService().createDeployment().name("test1").addString("test1.bpmn20.xml", new String(xml)).deploy();
+        processEngine.getRepositoryService().createDeployment().name("test1").addString("test1.bpmn20.xml", new String(xml)).deploy();
 
         String processInstanceKey = runtimeService.startProcessInstanceByKey("process").getId();
         Execution execution = runtimeService.createExecutionQuery().processInstanceId(processInstanceKey).messageEventSubscriptionName("InterruptMessage").singleResult();

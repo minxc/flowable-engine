@@ -17,7 +17,7 @@ import java.util.List;
 
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.SentryPartInstanceDataManager;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 
 /**
  * @author Joram Barrez
@@ -44,6 +44,11 @@ public class SentryPartInstanceEntityManagerImpl extends AbstractCmmnEntityManag
     @Override
     public List<SentryPartInstanceEntity> findSentryPartInstancesByPlanItemInstanceId(String planItemId) {
         return sentryPartInstanceDataManager.findSentryPartInstancesByPlanItemInstanceId(planItemId);
+    }
+    
+    @Override
+    public void deleteByCaseInstanceId(String caseInstanceId) {
+        sentryPartInstanceDataManager.deleteByCaseInstanceId(caseInstanceId);
     }
 
 }

@@ -12,10 +12,13 @@
  */
 package org.flowable.engine.impl.history.async.json.transformer;
 
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getDateFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getStringFromJson;
+
 import java.util.Date;
 
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
 import org.flowable.engine.impl.history.async.HistoryJsonConstants;
 import org.flowable.engine.impl.persistence.entity.HistoricProcessInstanceEntity;
@@ -25,18 +28,13 @@ import org.flowable.job.service.impl.persistence.entity.HistoryJobEntity;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class ProcessInstanceEndHistoryJsonTransformer extends AbstractHistoryJsonTransformer {
+public class ProcessInstanceEndHistoryJsonTransformer extends AbstractNeedsProcessInstanceHistoryJsonTransformer {
 
     @Override
     public String getType() {
         return HistoryJsonConstants.TYPE_PROCESS_INSTANCE_END;
     }
     
-    @Override
-    public boolean isApplicable(ObjectNode historicalData, CommandContext commandContext) {
-        return true;
-    }
-
     @Override
     public void transformJson(HistoryJobEntity job, ObjectNode historicalData, CommandContext commandContext) {
         HistoricProcessInstanceEntityManager historicProcessInstanceEntityManager = CommandContextUtil.getHistoricProcessInstanceEntityManager(commandContext);
@@ -97,5 +95,5 @@ public class ProcessInstanceEndHistoryJsonTransformer extends AbstractHistoryJso
             dispatchEvent(commandContext, FlowableEventBuilder.createEntityEvent(FlowableEngineEventType.HISTORIC_PROCESS_INSTANCE_ENDED, historicProcessInstance));
         }
     }
-
+    
 }

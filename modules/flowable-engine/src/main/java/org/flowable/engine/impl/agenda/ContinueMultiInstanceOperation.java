@@ -14,10 +14,10 @@ package org.flowable.engine.impl.agenda;
 
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.FlowNode;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.util.CollectionUtil;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.util.CollectionUtil;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.ExecutionListener;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
@@ -44,10 +44,12 @@ public class ContinueMultiInstanceOperation extends AbstractOperation {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ContinueMultiInstanceOperation.class);
     
+    protected ExecutionEntity multiInstanceRootExecution;
     protected int loopCounter;
 
-    public ContinueMultiInstanceOperation(CommandContext commandContext, ExecutionEntity execution, int loopCounter) {
+    public ContinueMultiInstanceOperation(CommandContext commandContext, ExecutionEntity execution, ExecutionEntity multiInstanceRootExecution, int loopCounter) {
         super(commandContext, execution);
+        this.multiInstanceRootExecution = multiInstanceRootExecution;
         this.loopCounter = loopCounter;
     }
 
@@ -119,7 +121,7 @@ public class ContinueMultiInstanceOperation extends AbstractOperation {
         
         execution.getJobs().add(job);
         
-        jobService.setAsyncJobProperties(job, flowNode.isExclusive());
+        jobService.createAsyncJob(job, flowNode.isExclusive());
         jobService.scheduleAsyncJob(job);
     }
     
@@ -130,7 +132,11 @@ public class ContinueMultiInstanceOperation extends AbstractOperation {
         }
         MultiInstanceActivityBehavior multiInstanceActivityBehavior = (MultiInstanceActivityBehavior) activityBehavior;
         String elementIndexVariable = multiInstanceActivityBehavior.getCollectionElementIndexVariable();
-        execution.setVariableLocal(elementIndexVariable, loopCounter);
+        if (!flowNode.isAsynchronous()) {
+            execution.setVariableLocal(elementIndexVariable, loopCounter);
+        } else {
+            multiInstanceRootExecution.setVariableLocal(elementIndexVariable, loopCounter);
+        }
         return activityBehavior;
     }
     

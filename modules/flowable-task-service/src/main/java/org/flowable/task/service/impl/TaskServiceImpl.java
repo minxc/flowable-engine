@@ -14,20 +14,20 @@ package org.flowable.task.service.impl;
 
 import java.util.List;
 
+import org.flowable.common.engine.impl.service.CommonServiceImpl;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.TaskBuilder;
+import org.flowable.task.api.TaskQuery;
 import org.flowable.task.service.TaskService;
 import org.flowable.task.service.TaskServiceConfiguration;
 import org.flowable.task.service.impl.persistence.entity.TaskEntity;
+import org.flowable.task.service.impl.persistence.entity.TaskEntityManager;
 
 /**
  * @author Tom Baeyens
  * @author Joram Barrez
  */
-public class TaskServiceImpl extends ServiceImpl implements TaskService {
-
-    public TaskServiceImpl() {
-
-    }
+public class TaskServiceImpl extends CommonServiceImpl<TaskServiceConfiguration> implements TaskService {
 
     public TaskServiceImpl(TaskServiceConfiguration taskServiceConfiguration) {
         super(taskServiceConfiguration);
@@ -56,6 +56,11 @@ public class TaskServiceImpl extends ServiceImpl implements TaskService {
     @Override
     public List<TaskEntity> findTasksBySubScopeIdScopeType(String subScopeId, String scopeType) {
         return getTaskEntityManager().findTasksBySubScopeIdAndScopeType(subScopeId, scopeType);
+    }
+
+    @Override
+    public TaskQuery createTaskQuery() {
+        return new TaskQueryImpl();
     }
 
     @Override
@@ -97,5 +102,18 @@ public class TaskServiceImpl extends ServiceImpl implements TaskService {
     public void deleteTask(TaskEntity task, boolean fireEvents) {
         getTaskEntityManager().delete(task, fireEvents);
     }
+    
+    @Override
+    public void deleteTasksByExecutionId(String executionId) {
+        getTaskEntityManager().deleteTasksByExecutionId(executionId);
+    }
 
+    public TaskEntityManager getTaskEntityManager() {
+        return configuration.getTaskEntityManager();
+    }
+
+    @Override
+    public Task createTask(TaskBuilder taskBuilder) {
+        return getTaskEntityManager().createTask(taskBuilder);
+    }
 }

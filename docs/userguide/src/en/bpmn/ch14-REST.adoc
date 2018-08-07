@@ -20,7 +20,7 @@ GET repository/deployments
 |tenantId|No|String|Only return deployments with the given tenantId.
 |tenantIdLike|No|String|Only return deployments with a tenantId like the given value.
 |withoutTenantId|No|Boolean|If +true+, only returns deployments without a tenantId set. If +false+, the +withoutTenantId+ parameter is ignored.
-|sort|No|'id' (default), 'name', 'deploytime' or 'tenantId'|Property to sort on, to be used together with the 'order'.
+|sort|No|'id' (default), 'name', 'deployTime' or 'tenantId'|Property to sort on, to be used together with the 'order'.
 |The general <<restPagingAndSort,paging and sorting query-parameters>> can be used for this URL.
 
 |===============
@@ -4223,7 +4223,7 @@ GET runtime/tasks/{taskId}/attachments/{attachmentId}
 
 
 *  ++externalUrl - contentUrl:++In case the attachment is a link to an external resource, the +externalUrl+ contains the URL to the external content. If the attachment content is present in the Flowable engine, the +contentUrl+ will contain an URL where the binary content can be streamed from.
-*  ++type:++Can be any arbitrary value. When a valid formatted media-type (e.g. application/xml, text/plain) is included, the binary content HTTP response content-type will be set the the given value.
+*  ++type:++Can be any arbitrary value. When a valid formatted media-type (e.g. application/xml, text/plain) is included, the binary content HTTP response content-type will be set the given value.
 
 .Get an attachment on a task - Response codes
 [options="header"]

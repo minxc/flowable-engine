@@ -14,8 +14,8 @@ package org.flowable.job.service.impl.persistence.entity.data;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.Page;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.TimerJobQueryImpl;
 import org.flowable.job.service.impl.persistence.entity.TimerJobEntity;
@@ -43,4 +43,5 @@ public interface TimerJobDataManager extends DataManager<TimerJobEntity> {
     long findJobCountByQueryCriteria(TimerJobQueryImpl jobQuery);
 
     void updateJobTenantIdForDeployment(String deploymentId, String newTenantId);
+    
 }

@@ -16,9 +16,9 @@ package org.flowable.rest.service.api.identity;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
 import org.flowable.engine.IdentityService;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.FlowableObjectNotFoundException;
 import org.flowable.idm.api.User;
 import org.flowable.rest.service.api.RestResponseFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +100,11 @@ public class UserInfoResource extends BaseUserResource {
     @DeleteMapping("/identity/users/{userId}/info/{key}")
     public void deleteUserInfo(@ApiParam(name = "userId") @PathVariable("userId") String userId, @ApiParam(name = "key") @PathVariable("key") String key, HttpServletResponse response) {
         User user = getUserFromRequest(userId);
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.deleteUser(user);
+        }
+        
         String validKey = getValidKeyFromRequest(user, key);
 
         identityService.setUserInfo(user.getId(), validKey, null);

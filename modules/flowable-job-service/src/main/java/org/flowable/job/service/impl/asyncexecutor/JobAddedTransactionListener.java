@@ -12,14 +12,13 @@
  */
 package org.flowable.job.service.impl.asyncexecutor;
 
-import org.flowable.engine.common.impl.cfg.TransactionListener;
-import org.flowable.engine.common.impl.cfg.TransactionPropagation;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandConfig;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.common.engine.impl.cfg.TransactionListener;
+import org.flowable.common.engine.impl.cfg.TransactionPropagation;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandConfig;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.job.service.impl.persistence.entity.JobInfoEntity;
-import org.flowable.job.service.impl.util.CommandContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +31,16 @@ public class JobAddedTransactionListener implements TransactionListener {
 
     protected JobInfoEntity job;
     protected AsyncExecutor asyncExecutor;
+    protected CommandExecutor commandExecutor;
 
-    public JobAddedTransactionListener(JobInfoEntity job, AsyncExecutor asyncExecutor) {
+    public JobAddedTransactionListener(JobInfoEntity job, AsyncExecutor asyncExecutor, CommandExecutor commandExecutor) {
         this.job = job;
         this.asyncExecutor = asyncExecutor;
+        this.commandExecutor = commandExecutor;
     }
 
     @Override
     public void execute(CommandContext commandContext) {
-        CommandExecutor commandExecutor = CommandContextUtil.getJobServiceConfiguration(commandContext).getCommandExecutor();
         CommandConfig commandConfig = new CommandConfig(false, TransactionPropagation.REQUIRES_NEW);
         commandExecutor.execute(commandConfig, new Command<Void>() {
             @Override

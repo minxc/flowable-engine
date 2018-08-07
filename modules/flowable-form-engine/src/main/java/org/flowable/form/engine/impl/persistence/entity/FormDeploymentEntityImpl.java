@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.impl.persistence.entity.AbstractEntityNoRevision;
+import org.flowable.common.engine.impl.persistence.entity.AbstractEntityNoRevision;
 import org.flowable.form.engine.FormEngineConfiguration;
 
 /**
@@ -66,6 +66,7 @@ public class FormDeploymentEntityImpl extends AbstractEntityNoRevision implement
         Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("category", this.category);
         persistentState.put("tenantId", tenantId);
+        persistentState.put("parentDeploymentId", parentDeploymentId);
         return persistentState;
     }
 

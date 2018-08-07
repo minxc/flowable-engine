@@ -24,11 +24,11 @@ import org.flowable.bpmn.model.Signal;
 import org.flowable.bpmn.model.SignalEventDefinition;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.TimerEventDefinition;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.repository.EngineResource;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.util.CollectionUtil;
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.repository.EngineResource;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
-import org.flowable.engine.common.impl.util.CollectionUtil;
 import org.flowable.engine.delegate.event.impl.FlowableEventBuilder;
 import org.flowable.engine.impl.DeploymentQueryImpl;
 import org.flowable.engine.impl.ModelQueryImpl;
@@ -153,7 +153,7 @@ public class DeploymentEntityManagerImpl extends AbstractEntityManager<Deploymen
 
     protected void restorePreviousStartEventsIfNeeded(ProcessDefinition processDefinition) {
         ProcessDefinitionEntity latestProcessDefinition = findLatestProcessDefinition(processDefinition);
-        if (processDefinition.getId().equals(latestProcessDefinition.getId())) {
+        if (latestProcessDefinition != null && processDefinition.getId().equals(latestProcessDefinition.getId())) {
 
             // Try to find a previous version (it could be some versions are missing due to deletions)
             ProcessDefinition previousProcessDefinition = findNewLatestProcessDefinitionAfterRemovalOf(processDefinition);
@@ -273,7 +273,9 @@ public class DeploymentEntityManagerImpl extends AbstractEntityManager<Deploymen
             query.processDefinitionWithoutTenantId();
         }
 
-        query.processDefinitionVersionLowerThan(processDefinitionToBeRemoved.getVersion());
+        if (processDefinitionToBeRemoved.getVersion() > 0) {
+            query.processDefinitionVersionLowerThan(processDefinitionToBeRemoved.getVersion());
+        }
         query.orderByProcessDefinitionVersion().desc();
 
         query.setFirstResult(0);

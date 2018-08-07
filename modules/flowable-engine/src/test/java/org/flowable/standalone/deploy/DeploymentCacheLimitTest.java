@@ -12,9 +12,10 @@
  */
 package org.flowable.standalone.deploy;
 
+import java.io.IOException;
 import java.text.MessageFormat;
 
-import org.flowable.engine.common.impl.persistence.deploy.DefaultDeploymentCache;
+import org.flowable.common.engine.impl.persistence.deploy.DefaultDeploymentCache;
 import org.flowable.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.flowable.engine.impl.test.ResourceFlowableTestCase;
 import org.flowable.engine.repository.Deployment;
@@ -28,7 +29,7 @@ public class DeploymentCacheLimitTest extends ResourceFlowableTestCase {
         super("org/flowable/standalone/deploy/deployment.cache.limit.test.flowable.cfg.xml");
     }
 
-    public void testDeploymentCacheLimit() {
+    public void testDeploymentCacheLimit() throws IOException {
         int processDefinitionCacheLimit = 3; // This is set in the configuration
                                              // above
 

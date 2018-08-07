@@ -33,6 +33,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.StringUtils;
+import org.flowable.common.engine.api.io.InputStreamProvider;
 import org.flowable.dmn.converter.util.DmnXMLUtil;
 import org.flowable.dmn.model.BuiltinAggregator;
 import org.flowable.dmn.model.Decision;
@@ -49,7 +50,6 @@ import org.flowable.dmn.model.RuleInputClauseContainer;
 import org.flowable.dmn.model.RuleOutputClauseContainer;
 import org.flowable.dmn.xml.constants.DmnXMLConstants;
 import org.flowable.dmn.xml.exception.DmnXMLException;
-import org.flowable.engine.common.api.io.InputStreamProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -398,6 +398,8 @@ public class DmnXMLConverter implements DmnXMLConstants {
                     for (RuleInputClauseContainer container : rule.getInputEntries()) {
                         xtw.writeStartElement(ELEMENT_INPUT_ENTRY);
                         xtw.writeAttribute(ATTRIBUTE_ID, container.getInputEntry().getId());
+
+                        DmnXMLUtil.writeExtensionElements(container.getInputEntry(), xtw);
 
                         xtw.writeStartElement(ELEMENT_TEXT);
                         xtw.writeCData(container.getInputEntry().getText());

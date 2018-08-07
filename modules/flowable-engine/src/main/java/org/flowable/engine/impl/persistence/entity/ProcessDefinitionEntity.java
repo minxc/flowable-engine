@@ -14,8 +14,8 @@ package org.flowable.engine.impl.persistence.entity;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.db.HasRevision;
-import org.flowable.engine.common.impl.persistence.entity.Entity;
+import org.flowable.common.engine.impl.db.HasRevision;
+import org.flowable.common.engine.impl.persistence.entity.Entity;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 
@@ -62,10 +62,16 @@ public interface ProcessDefinitionEntity extends ProcessDefinition, Entity, HasR
     int getSuspensionState();
 
     void setSuspensionState(int suspensionState);
+    
+    void setDerivedFrom(String derivedFrom);
+    
+    void setDerivedFromRoot(String derivedFromRoot);
 
+    void setDerivedVersion(int derivedVersion);
+    
     @Override
     String getEngineVersion();
 
     void setEngineVersion(String engineVersion);
-
+    
 }

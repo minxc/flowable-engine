@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.flowable.cmmn.api.history.HistoricCaseInstance;
 import org.flowable.cmmn.api.history.HistoricCaseInstanceQuery;
-import org.flowable.engine.common.impl.persistence.entity.EntityManager;
+import org.flowable.common.engine.impl.persistence.entity.EntityManager;
 
 /**
  * @author Joram Barrez
@@ -28,9 +28,10 @@ public interface HistoricCaseInstanceEntityManager extends EntityManager<Histori
     List<HistoricCaseInstanceEntity> findHistoricCaseInstancesByCaseDefinitionId(String caseDefinitionId);
     
     List<HistoricCaseInstance> findByCriteria(HistoricCaseInstanceQuery query);
-    
+
+    @SuppressWarnings("unchecked")
+    List<HistoricCaseInstance> findWithVariablesByQueryCriteria(HistoricCaseInstanceQuery query);
+
     long countByCriteria(HistoricCaseInstanceQuery query);
-    
-    void deleteByCaseDefinitionId(String caseDefinitionId);
     
 }

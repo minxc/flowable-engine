@@ -12,11 +12,17 @@
  */
 package org.flowable.engine.impl.history.async.json.transformer;
 
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getDateFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getDoubleFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getIntegerFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getLongFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getStringFromJson;
+
+import java.util.Base64;
 import java.util.Date;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.history.async.HistoryJsonConstants;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.job.service.impl.persistence.entity.HistoryJobEntity;
@@ -62,7 +68,7 @@ public class VariableCreatedHistoryJsonTransformer extends AbstractHistoryJsonTr
         
         String variableBytes = getStringFromJson(historicalData, HistoryJsonConstants.VARIABLE_BYTES_VALUE);
         if (StringUtils.isNotEmpty(variableBytes)) {
-            historicVariableInstanceEntity.setBytes(Base64.decodeBase64(variableBytes));
+            historicVariableInstanceEntity.setBytes(Base64.getDecoder().decode(variableBytes));
         }
         
         Date time = getDateFromJson(historicalData, HistoryJsonConstants.CREATE_TIME);

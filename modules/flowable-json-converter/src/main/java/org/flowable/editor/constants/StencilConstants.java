@@ -91,8 +91,10 @@ public interface StencilConstants {
     final String PROPERTY_PROCESS_VERSION = "process_version";
     final String PROPERTY_PROCESS_AUTHOR = "process_author";
     final String PROPERTY_PROCESS_NAMESPACE = "process_namespace";
+    final String PROPERTY_PROCESS_HISTORYLEVEL = "process_historylevel";
 
     final String PROPERTY_IS_EXECUTABLE = "isexecutable";
+    final String PROPERTY_IS_EAGER_EXECUTION_FETCHING = "iseagerexecutionfetch";
 
     final String PROPERTY_PROCESS_POTENTIALSTARTERUSER = "process_potentialstarteruser";
     final String PROPERTY_PROCESS_POTENTIALSTARTERGROUP = "process_potentialstartergroup";
@@ -175,6 +177,8 @@ public interface StencilConstants {
     final String PROPERTY_SERVICETASK_FIELD_STRING_VALUE = "stringValue";
     final String PROPERTY_SERVICETASK_FIELD_STRING = "string";
     final String PROPERTY_SERVICETASK_FIELD_EXPRESSION = "expression";
+    final String PROPERTY_SERVICETASK_TRIGGERABLE = "servicetasktriggerable";
+    final String PROPERTY_SERVICETASK_USE_LOCAL_SCOPE_FOR_RESULT_VARIABLE = "servicetaskUseLocalScopeForResultVariable";
 
     final String PROPERTY_FORM_PROPERTIES = "formproperties";
     final String PROPERTY_FORM_ID = "id";
@@ -215,10 +219,13 @@ public interface StencilConstants {
     final String PROPERTY_MAILTASK_CHARSET = "mailtaskcharset";
 
     final String PROPERTY_CALLACTIVITY_CALLEDELEMENT = "callactivitycalledelement";
+    final String PROPERTY_CALLACTIVITY_CALLEDELEMENTTYPE = "callactivitycalledelementtype";
     final String PROPERTY_CALLACTIVITY_IN = "callactivityinparameters";
     final String PROPERTY_CALLACTIVITY_OUT = "callactivityoutparameters";
     final String PROPERTY_CALLACTIVITY_INHERIT_VARIABLES = "callactivityinheritvariables";
     final String PROPERTY_CALLACTIVITY_SAME_DEPLOYMENT = "callactivitysamedeployment";
+    final String PROPERTY_CALLACTIVITY_PROCESS_INSTANCE_NAME = "callactivityprocessinstancename";
+    final String PROPERTY_CALLACTIVITY_BUSINESS_KEY = "callactivitybusinesskey";
     final String PROPERTY_CALLACTIVITY_INHERIT_BUSINESS_KEY = "callactivityinheritbusinesskey";
     final String PROPERTY_CALLACTIVITY_USE_LOCALSCOPE_FOR_OUTPARAMETERS = "callactivityuselocalscopeforoutparameters";
     final String PROPERTY_IOPARAMETER_SOURCE = "source";
@@ -270,6 +277,8 @@ public interface StencilConstants {
     final String PROPERTY_HTTPTASK_SAVE_REQUEST_VARIABLES = "httptasksaverequestvariables";
     final String PROPERTY_HTTPTASK_SAVE_RESPONSE_PARAMETERS = "httptasksaveresponseparameters";
     final String PROPERTY_HTTPTASK_RESULT_VARIABLE_PREFIX = "httptaskresultvariableprefix";
+    final String PROPERTY_HTTPTASK_SAVE_RESPONSE_TRANSIENT = "httptasksaveresponseparameterstransient";
+    final String PROPERTY_HTTPTASK_SAVE_RESPONSE_AS_JSON = "httptasksaveresponseasjson";
 
     final String PROPERTY_SKIP_EXPRESSION = "skipexpression";
 

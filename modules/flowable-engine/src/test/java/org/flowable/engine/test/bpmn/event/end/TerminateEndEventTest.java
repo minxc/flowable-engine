@@ -26,12 +26,12 @@ import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.EndEvent;
 import org.flowable.bpmn.model.ExtensionAttribute;
 import org.flowable.bpmn.model.ExtensionElement;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
-import org.flowable.engine.common.impl.history.HistoryLevel;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEvent;
+import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.delegate.JavaDelegate;
+import org.flowable.engine.delegate.event.AbstractFlowableEngineEventListener;
 import org.flowable.engine.history.DeleteReason;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
@@ -98,6 +98,19 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
         assertHistoricTasksDeleteReason(pi, DeleteReason.TERMINATE_END_EVENT, "check before end");
         assertHistoricActivitiesDeleteReason(pi, DeleteReason.TERMINATE_END_EVENT, "preNormalTerminateTask");
         assertHistoricActivitiesDeleteReason(pi, null, "preTerminateTask");
+    }
+    
+    @Deployment
+    public void testTerminateExecutionListener() throws Exception {
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey("terminateEndEventExample");
+
+        org.flowable.task.api.Task task = taskService.createTaskQuery().processInstanceId(pi.getId()).taskDefinitionKey("preTerminateTask").singleResult();
+        taskService.complete(task.getId());
+
+        assertProcessEnded(pi.getId());
+        
+        assertEquals(1, TerminateExecutionListener.startCalled);
+        assertEquals(1, TerminateExecutionListener.endCalled);
     }
 
     @Deployment
@@ -287,7 +300,7 @@ public class TerminateEndEventTest extends PluggableFlowableTestCase {
     @Deployment
     public void testTerminateParallelGateway() throws Exception {
         final List<FlowableEvent> events = new ArrayList<>();
-        processEngine.getRuntimeService().addEventListener(new FlowableEventListener() {
+        processEngine.getRuntimeService().addEventListener(new AbstractFlowableEngineEventListener() {
             
             @Override
             public void onEvent(FlowableEvent event) {

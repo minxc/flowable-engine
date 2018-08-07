@@ -176,7 +176,7 @@ public class RuntimeTest extends AbstractFlowableDmnTest {
     public void missingInputVariableBoolean() {
         DecisionExecutionAuditContainer result = ruleService.createExecuteDecisionBuilder()
                 .decisionKey("decision")
-                .variables(new HashMap<String, Object>())
+                .variables(new HashMap<>())
                 .executeWithAuditTrail();
         Assert.assertEquals(false, result.isFailed());
     }
@@ -330,13 +330,14 @@ public class RuntimeTest extends AbstractFlowableDmnTest {
         processVariablesInput.put("inputVariable1", 1D);
         processVariablesInput.put("inputVariable2", "test2");
 
-        Map<String, Object> result = ruleService.createExecuteDecisionBuilder()
+        DecisionExecutionAuditContainer result = ruleService.createExecuteDecisionBuilder()
                 .decisionKey("decision")
                 .variables(processVariablesInput)
-                .executeWithSingleResult();
+                .executeWithAuditTrail();
 
         Assert.assertNotNull(result);
-
+        Assert.assertEquals(true, result.getRuleExecutions().get(1).getConditionResults().get(0).getResult());
+        Assert.assertEquals(true, result.getRuleExecutions().get(2).getConditionResults().get(0).getResult());
+        Assert.assertEquals(true, result.getRuleExecutions().get(3).getConditionResults().get(0).getResult());
     }
-
 }

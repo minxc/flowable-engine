@@ -14,7 +14,6 @@ package org.flowable.editor.language.json.converter;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import org.apache.commons.lang3.StringUtils;
 import org.flowable.bpmn.model.BaseElement;
 import org.flowable.bpmn.model.FieldExtension;
@@ -25,6 +24,7 @@ import org.flowable.bpmn.model.ServiceTask;
 import org.flowable.editor.language.json.model.ModelInfo;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
@@ -106,10 +106,13 @@ public class ServiceTaskJsonConverter extends BaseBpmnJsonConverter implements D
             setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_DISALLOW_REDIRECTS, "disallowRedirects", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_FAIL_STATUS_CODES, "failStatusCodes", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_HANDLE_STATUS_CODES, "handleStatusCodes", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_RESPONSE_VARIABLE_NAME, "responseVariableName", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_REQ_IGNORE_EXCEPTION, "ignoreException", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_REQUEST_VARIABLES, "saveRequestVariables", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_RESPONSE_PARAMETERS, "saveResponseParameters", serviceTask, propertiesNode);
             setPropertyFieldValue(PROPERTY_HTTPTASK_RESULT_VARIABLE_PREFIX, "resultVariablePrefix", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_RESPONSE_TRANSIENT, "saveResponseParametersTransient", serviceTask, propertiesNode);
+            setPropertyFieldValue(PROPERTY_HTTPTASK_SAVE_RESPONSE_AS_JSON, "saveResponseVariableAsJson", serviceTask, propertiesNode);
 
         } else if ("shell".equalsIgnoreCase(serviceTask.getType())) {
             setPropertyFieldValue(PROPERTY_SHELLTASK_COMMAND, "command", serviceTask, propertiesNode);
@@ -132,9 +135,17 @@ public class ServiceTaskJsonConverter extends BaseBpmnJsonConverter implements D
             } else if (ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION.equals(serviceTask.getImplementationType())) {
                 propertiesNode.put(PROPERTY_SERVICETASK_DELEGATE_EXPRESSION, serviceTask.getImplementation());
             }
+            
+            if (serviceTask.isTriggerable()) {
+                propertiesNode.put(PROPERTY_SERVICETASK_TRIGGERABLE, serviceTask.isTriggerable());
+            }
 
             if (StringUtils.isNotEmpty(serviceTask.getResultVariableName())) {
                 propertiesNode.put(PROPERTY_SERVICETASK_RESULT_VARIABLE, serviceTask.getResultVariableName());
+            }
+
+            if (serviceTask.isUseLocalScopeForResultVariable()) {
+                propertiesNode.put(PROPERTY_SERVICETASK_USE_LOCAL_SCOPE_FOR_RESULT_VARIABLE, serviceTask.isUseLocalScopeForResultVariable());
             }
 
             addFieldExtensions(serviceTask.getFieldExtensions(), propertiesNode);
@@ -156,9 +167,17 @@ public class ServiceTaskJsonConverter extends BaseBpmnJsonConverter implements D
             task.setImplementationType(ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION);
             task.setImplementation(getPropertyValueAsString(PROPERTY_SERVICETASK_DELEGATE_EXPRESSION, elementNode));
         }
+        
+        if (getPropertyValueAsBoolean(PROPERTY_SERVICETASK_TRIGGERABLE, elementNode)) {
+            task.setTriggerable(true);
+        }
 
         if (StringUtils.isNotEmpty(getPropertyValueAsString(PROPERTY_SERVICETASK_RESULT_VARIABLE, elementNode))) {
             task.setResultVariableName(getPropertyValueAsString(PROPERTY_SERVICETASK_RESULT_VARIABLE, elementNode));
+        }
+
+        if (getPropertyValueAsBoolean(PROPERTY_SERVICETASK_USE_LOCAL_SCOPE_FOR_RESULT_VARIABLE, elementNode)) {
+            task.setUseLocalScopeForResultVariable(true);
         }
 
         task.setSkipExpression(getPropertyValueAsString(PROPERTY_SKIP_EXPRESSION, elementNode));

@@ -1,9 +1,9 @@
 /* Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.impl.AbstractQuery;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.content.api.ContentItem;
 import org.flowable.content.api.ContentItemQuery;
 import org.flowable.content.engine.impl.util.CommandContextUtil;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.AbstractQuery;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 
 /**
  * @author Tijs Rademakers
@@ -138,7 +138,7 @@ public class ContentItemQueryImpl extends AbstractQuery<ContentItemQuery, Conten
         this.processInstanceIdLike = processInstanceIdLike;
         return this;
     }
-    
+
     @Override
     public ContentItemQueryImpl scopeId(String scopeId) {
         this.scopeId = scopeId;
@@ -358,7 +358,7 @@ public class ContentItemQueryImpl extends AbstractQuery<ContentItemQuery, Conten
     public String getProcessInstanceIdLike() {
         return processInstanceIdLike;
     }
-    
+
     public String getScopeId() {
         return scopeId;
     }

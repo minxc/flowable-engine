@@ -1,9 +1,9 @@
 /* Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,11 @@ package org.flowable.idm.api;
 
 import java.util.List;
 
-import org.flowable.engine.common.api.query.Query;
+import org.flowable.common.engine.api.query.Query;
 
 /**
  * Allows programmatic querying of {@link User}
- * 
+ *
  * @author Joram Barrez
  */
 public interface UserQuery extends Query<UserQuery, User> {
@@ -69,6 +69,19 @@ public interface UserQuery extends Query<UserQuery, User> {
      * like xxx
      */
     UserQuery userFullNameLikeIgnoreCase(String fullNameLikeIgnoreCase);
+    
+    /** Only select {@link User}s with the given displayName. */
+    UserQuery userDisplayName(String displayName);
+
+    /**
+     * Only select {@link User}s where the display name matches the given parameter. The syntax is that of SQL, eg. %name%.
+     */
+    UserQuery userDisplayNameLike(String displayNameLike);
+
+    /**
+     * Only select {@link User}s where the display name matches the given parameter (ignoring case). The syntax is that of SQL, eg. %name%.
+     */
+    UserQuery userDisplayNameLikeIgnoreCase(String displayNameLikeIgnoreCase);
 
     /** Only those {@link User}s with the given email address. */
     UserQuery userEmail(String email);
@@ -83,6 +96,9 @@ public interface UserQuery extends Query<UserQuery, User> {
 
     /** Only select {@link User}s that belong to the given groups. */
     UserQuery memberOfGroups(List<String> groupIds);
+
+    /** Only select {@link User}s that belong to the given tenant. */
+    UserQuery tenantId(String tenantId);
 
     // sorting ////////////////////////////////////////////////////////
 

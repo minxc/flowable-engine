@@ -16,7 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.impl.el.ExpressionManager;
 import org.flowable.dmn.api.DecisionExecutionAuditContainer;
 import org.flowable.dmn.engine.DmnEngineConfiguration;
 import org.flowable.dmn.engine.RuleEngineExecutor;
@@ -39,8 +42,6 @@ import org.flowable.dmn.model.HitPolicy;
 import org.flowable.dmn.model.LiteralExpression;
 import org.flowable.dmn.model.RuleInputClauseContainer;
 import org.flowable.dmn.model.RuleOutputClauseContainer;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.impl.el.ExpressionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,10 +113,11 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
                 decisionExecutionEntity.setInstanceId(executeDecisionInfo.getInstanceId());
                 decisionExecutionEntity.setExecutionId(executeDecisionInfo.getExecutionId());
                 decisionExecutionEntity.setActivityId(executeDecisionInfo.getActivityId());
+                decisionExecutionEntity.setScopeType(executeDecisionInfo.getScopeType());
                 decisionExecutionEntity.setTenantId(executeDecisionInfo.getTenantId());
 
                 Boolean failed = executionContext.getAuditContainer().isFailed();
-                if (failed != null) {
+                if (BooleanUtils.isTrue(failed)) {
                     decisionExecutionEntity.setFailed(failed.booleanValue());
                 }
 
@@ -134,7 +136,6 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
 
     protected void evaluateDecisionTable(DecisionTable decisionTable, ELExecutionContext executionContext) {
         LOGGER.debug("Start table evaluation: {}", decisionTable.getId());
-
 
         if (decisionTable == null || decisionTable.getRules().isEmpty()) {
             throw new IllegalArgumentException("no rules present in table");
@@ -163,7 +164,7 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
 
                 // should continue evaluating
                 if (getHitPolicyBehavior(decisionTable.getHitPolicy()) instanceof ContinueEvaluatingBehavior) {
-                    if (((ContinueEvaluatingBehavior) getHitPolicyBehavior(decisionTable.getHitPolicy())).shouldContinueEvaluating(ruleResult) == false) {
+                    if (getHitPolicyBehavior(decisionTable.getHitPolicy()).shouldContinueEvaluating(ruleResult) == false) {
                         LOGGER.debug("Stopping execution; hit policy {} specific behaviour", decisionTable.getHitPolicy());
                         break;
                     }
@@ -177,7 +178,7 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
 
             // post rule conclusion actions
             if (getHitPolicyBehavior(decisionTable.getHitPolicy()) instanceof ComposeDecisionResultBehavior) {
-                ((ComposeDecisionResultBehavior) getHitPolicyBehavior(decisionTable.getHitPolicy())).composeDecisionResults(executionContext);
+                getHitPolicyBehavior(decisionTable.getHitPolicy()).composeDecisionResults(executionContext);
             }
 
         } catch (FlowableException ade) {
@@ -240,7 +241,9 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
             if (!conditionResult) {
                 break;
             }
+        }
 
+        if (conditionResult) {
             // mark rule valid
             executionContext.getAuditContainer().markRuleValid(rule.getRuleNumber());
         }
@@ -279,6 +282,9 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
             try {
                 Object resultValue = ELExpressionExecutor.executeOutputExpression(ruleClauseContainer.getOutputClause(), outputEntryExpression, expressionManager, executionContext);
                 executionVariable = ExecutionVariableFactory.getExecutionVariable(outputVariableType, resultValue);
+
+                // update execution context
+                executionContext.getStackVariables().put(outputVariableId, executionVariable);
 
                 // create result
                 if (getHitPolicyBehavior(hitPolicy) instanceof ComposeRuleResultBehavior) {
@@ -355,5 +361,35 @@ public class RuleEngineExecutorImpl implements RuleEngineExecutor {
                 throw new FlowableException(String.format("HitPolicy: %s has aggregation: %s needs output type number", decisionTable.getHitPolicy(), decisionTable.getAggregation()));
             }
         }
+    }
+
+    @Override
+    public Map<String, AbstractHitPolicy> getHitPolicyBehaviors() {
+        return hitPolicyBehaviors;
+    }
+
+    @Override
+    public void setHitPolicyBehaviors(Map<String, AbstractHitPolicy> hitPolicyBehaviors) {
+        this.hitPolicyBehaviors = hitPolicyBehaviors;
+    }
+
+    @Override
+    public ExpressionManager getExpressionManager() {
+        return expressionManager;
+    }
+
+    @Override
+    public void setExpressionManager(ExpressionManager expressionManager) {
+        this.expressionManager = expressionManager;
+    }
+
+    @Override
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+
+    @Override
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

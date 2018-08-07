@@ -12,11 +12,11 @@
  */
 package org.flowable.task.service.impl.persistence.entity;
 
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.engine.common.impl.persistence.entity.Entity;
-import org.flowable.engine.common.impl.persistence.entity.EntityManager;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.impl.persistence.entity.Entity;
+import org.flowable.common.engine.impl.persistence.entity.EntityManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 import org.flowable.task.service.TaskServiceConfiguration;
 import org.flowable.task.service.event.impl.FlowableTaskEventBuilder;
 import org.flowable.task.service.impl.persistence.AbstractManager;
@@ -69,7 +69,8 @@ public abstract class AbstractEntityManager<EntityImpl extends Entity> extends A
     public EntityImpl update(EntityImpl entity, boolean fireUpdateEvent) {
         EntityImpl updatedEntity = getDataManager().update(entity);
 
-        if (fireUpdateEvent && getEventDispatcher().isEnabled()) {
+        FlowableEventDispatcher eventDispatcher = getEventDispatcher();
+        if (fireUpdateEvent && eventDispatcher != null && eventDispatcher.isEnabled()) {
             getEventDispatcher().dispatchEvent(FlowableTaskEventBuilder.createEntityEvent(FlowableEngineEventType.ENTITY_UPDATED, entity));
         }
 

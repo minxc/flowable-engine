@@ -12,6 +12,16 @@
  */
 package org.flowable.http.cmmn.impl;
 
+import static org.flowable.http.ExpressionUtils.getBooleanFromField;
+import static org.flowable.http.ExpressionUtils.getStringFromField;
+import static org.flowable.http.ExpressionUtils.getStringSetFromField;
+import static org.flowable.http.HttpActivityExecutor.HTTP_TASK_REQUEST_FIELD_INVALID;
+
+import java.util.Collections;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
@@ -20,6 +30,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.flowable.bpmn.model.MapExceptionEntry;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
+import org.flowable.cmmn.engine.HttpClientConfig;
 import org.flowable.cmmn.engine.impl.behavior.CoreCmmnActivityBehavior;
 import org.flowable.cmmn.engine.impl.persistence.entity.PlanItemInstanceEntity;
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
@@ -27,9 +38,9 @@ import org.flowable.cmmn.model.FlowableHttpRequestHandler;
 import org.flowable.cmmn.model.FlowableHttpResponseHandler;
 import org.flowable.cmmn.model.HttpServiceTask;
 import org.flowable.cmmn.model.ImplementationType;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.delegate.Expression;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.delegate.Expression;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.http.ExpressionUtils;
 import org.flowable.http.HttpActivityExecutor;
 import org.flowable.http.HttpRequest;
@@ -40,13 +51,6 @@ import org.flowable.http.delegate.HttpRequestHandler;
 import org.flowable.http.delegate.HttpResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
-import java.util.Collections;
-
-import static org.flowable.http.ExpressionUtils.getStringSetFromField;
-import static org.flowable.http.HttpActivityExecutor.HTTP_TASK_REQUEST_FIELD_INVALID;
 
 /**
  * This class provides http task for cmmn models
@@ -81,6 +85,10 @@ public class CmmnHttpActivityBehaviorImpl extends CoreCmmnActivityBehavior {
     protected String saveResponseParameters;
     // Variable name for response body
     protected String responseVariableName;
+    // Flag to save the response variables as a transient variable. Default is false (Optional).
+    protected String saveResponseParametersTransient;
+    // Flag to save the response variable as an ObjectNode instead of a String
+    protected String saveResponseVariableAsJson;
     // Prefix for the execution variable names (Optional)
     protected String resultVariablePrefix;
 
@@ -116,7 +124,8 @@ public class CmmnHttpActivityBehaviorImpl extends CoreCmmnActivityBehavior {
         }
         httpClientBuilder.setRetryHandler(new DefaultHttpRequestRetryHandler(retryCount, false));
 
-        this.httpActivityExecutor = new HttpActivityExecutor(httpClientBuilder, new NopErrorPropagator());
+        this.httpActivityExecutor = new HttpActivityExecutor(httpClientBuilder, new NopErrorPropagator(), 
+                CommandContextUtil.getCmmnEngineConfiguration().getObjectMapper());
     }
 
 
@@ -134,6 +143,8 @@ public class CmmnHttpActivityBehaviorImpl extends CoreCmmnActivityBehavior {
             request.setIgnoreErrors(ExpressionUtils.getBooleanFromField(createExpression(ignoreException), planItemInstanceEntity));
             request.setSaveRequest(ExpressionUtils.getBooleanFromField(createExpression(saveRequestVariables), planItemInstanceEntity));
             request.setSaveResponse(ExpressionUtils.getBooleanFromField(createExpression(saveResponseParameters), planItemInstanceEntity));
+            request.setSaveResponseTransient(getBooleanFromField(createExpression(saveResponseParametersTransient), planItemInstanceEntity));
+            request.setSaveResponseAsJson(getBooleanFromField(createExpression(saveResponseVariableAsJson), planItemInstanceEntity));
             request.setPrefix(ExpressionUtils.getStringFromField(createExpression(resultVariablePrefix), planItemInstanceEntity));
 
             String failCodes = ExpressionUtils.getStringFromField(createExpression(failStatusCodes), planItemInstanceEntity);
@@ -152,17 +163,17 @@ public class CmmnHttpActivityBehaviorImpl extends CoreCmmnActivityBehavior {
 
             // Save request fields
             if (request.isSaveRequest()) {
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".requestMethod", request.getMethod());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".requestUrl", request.getUrl());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".requestHeaders", request.getHeaders());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".requestBody", request.getBody());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".requestTimeout", request.getTimeout());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".disallowRedirects", request.isNoRedirects());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".failStatusCodes", failCodes);
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".handleStatusCodes", handleCodes);
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".ignoreException", request.isIgnoreErrors());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".saveRequestVariables", request.isSaveRequest());
-                planItemInstanceEntity.setVariable(request.getPrefix() + ".saveResponseParameters", request.isSaveResponse());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "RequestMethod", request.getMethod());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "RequestUrl", request.getUrl());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "RequestHeaders", request.getHeaders());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "RequestBody", request.getBody());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "RequestTimeout", request.getTimeout());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "DisallowRedirects", request.isNoRedirects());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "FailStatusCodes", failCodes);
+                planItemInstanceEntity.setVariable(request.getPrefix() + "HandleStatusCodes", handleCodes);
+                planItemInstanceEntity.setVariable(request.getPrefix() + "IgnoreException", request.isIgnoreErrors());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "SaveRequestVariables", request.isSaveRequest());
+                planItemInstanceEntity.setVariable(request.getPrefix() + "SaveResponseParameters", request.isSaveResponse());
             }
 
         } catch (Exception e) {
@@ -174,17 +185,21 @@ public class CmmnHttpActivityBehaviorImpl extends CoreCmmnActivityBehavior {
         }
 
         httpActivityExecutor.validate(request);
+        
+        CmmnEngineConfiguration cmmnEngineConfiguration = CommandContextUtil.getCmmnEngineConfiguration();
+        HttpClientConfig httpClientConfig = cmmnEngineConfiguration.getHttpClientConfig();
 
-        httpActivityExecutor.execute(request,
+        httpActivityExecutor.execute(
+                request,
                 planItemInstanceEntity,
                 planItemInstanceEntity.getId(),
-                createHttpRequestHandler(serviceTask.getHttpRequestHandler(), CommandContextUtil.getCmmnEngineConfiguration()),
-                createHttpResponseHandler(serviceTask.getHttpResponseHandler(), CommandContextUtil.getCmmnEngineConfiguration()),
-                responseVariableName,
+                createHttpRequestHandler(serviceTask.getHttpRequestHandler(), cmmnEngineConfiguration),
+                createHttpResponseHandler(serviceTask.getHttpResponseHandler(), cmmnEngineConfiguration),
+                getStringFromField(createExpression(responseVariableName), planItemInstanceEntity),
                 Collections.<MapExceptionEntry>emptyList(),
-                CommandContextUtil.getCmmnEngineConfiguration().getHttpClientConfig().getSocketTimeout(),
-                CommandContextUtil.getCmmnEngineConfiguration().getHttpClientConfig().getConnectTimeout(),
-                CommandContextUtil.getCmmnEngineConfiguration().getHttpClientConfig().getConnectionRequestTimeout()
+                httpClientConfig.getSocketTimeout(),
+                httpClientConfig.getConnectTimeout(),
+                httpClientConfig.getConnectionRequestTimeout()
         );
 
         CommandContextUtil.getAgenda().planCompletePlanItemInstanceOperation(planItemInstanceEntity);

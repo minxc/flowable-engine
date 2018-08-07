@@ -12,7 +12,6 @@
  */
 package org.flowable.cmmn.engine.impl.parser;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,15 +36,17 @@ import org.flowable.cmmn.model.PlanFragment;
 import org.flowable.cmmn.model.PlanItem;
 import org.flowable.cmmn.model.PlanItemDefinition;
 import org.flowable.cmmn.model.ProcessTask;
+import org.flowable.cmmn.model.ScriptServiceTask;
 import org.flowable.cmmn.model.ServiceTask;
 import org.flowable.cmmn.model.Stage;
 import org.flowable.cmmn.model.Task;
 import org.flowable.cmmn.model.TimerEventListener;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.repository.EngineResource;
-import org.flowable.engine.common.impl.el.ExpressionManager;
-import org.flowable.engine.common.impl.util.io.InputStreamSource;
-import org.flowable.engine.common.impl.util.io.StreamSource;
+import org.flowable.cmmn.model.UserEventListener;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.repository.EngineResource;
+import org.flowable.common.engine.impl.el.ExpressionManager;
+import org.flowable.common.engine.impl.util.io.InputStreamSource;
+import org.flowable.common.engine.impl.util.io.StreamSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +60,7 @@ public class CmmnParserImpl implements CmmnParser {
     protected CmmnActivityBehaviorFactory activityBehaviorFactory;
     protected ExpressionManager expressionManager;
 
+    @Override
     public CmmnParseResult parse(EngineResource resourceEntity) {
         CmmnParseResult parseResult = new CmmnParseResult();
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(resourceEntity.getBytes())) {
@@ -118,13 +120,12 @@ public class CmmnParserImpl implements CmmnParser {
     protected void processPlanFragment(PlanFragment planFragment) {
 
         // TODO: do with parse handlers like bpmn engine?
-
         for (PlanItem planItem : planFragment.getPlanItems()) {
 
             PlanItemDefinition planItemDefinition = planItem.getPlanItemDefinition();
             if (planItemDefinition instanceof Stage) {
                 Stage stage = (Stage) planItemDefinition;
-                planItem.setBehavior(activityBehaviorFactory.createStageActivityBehavoir(planItem, stage));
+                planItem.setBehavior(activityBehaviorFactory.createStageActivityBehavior(planItem, stage));
 
             } else if (planItemDefinition instanceof HumanTask) {
                 HumanTask humanTask = (HumanTask) planItemDefinition;
@@ -150,34 +151,39 @@ public class CmmnParserImpl implements CmmnParser {
                 TimerEventListener timerEventListener = (TimerEventListener) planItemDefinition;
                 planItem.setBehavior(activityBehaviorFactory.createTimerEventListenerActivityBehavior(planItem, timerEventListener));
 
-            } else if (planItemDefinition instanceof Task) {
-                Task task = (Task) planItemDefinition;
+            } else if (planItemDefinition instanceof UserEventListener) {
+                UserEventListener userEventListener = (UserEventListener) planItemDefinition;
+                planItem.setBehavior(activityBehaviorFactory.createUserEventListenerActivityBehavior(planItem, userEventListener));
 
-                if (task instanceof ServiceTask) {
-                    ServiceTask serviceTask = (ServiceTask) task;
-                    switch (serviceTask.getType()) {
-                        case HttpServiceTask.HTTP_TASK:
-                            planItem.setBehavior(activityBehaviorFactory.createHttpActivityBehavior(planItem, serviceTask));
-                            break;
-                        default:
-                            // java task type was not set in the version <= 6.2.0 that's why we have to assume that default
-                            // service task type is java
-                            if (StringUtils.isNotEmpty(serviceTask.getImplementation())) {
-                                if (ImplementationType.IMPLEMENTATION_TYPE_CLASS.equals(serviceTask.getImplementationType())) {
-                                    planItem.setBehavior(activityBehaviorFactory.createCmmnClassDelegate(planItem, serviceTask));
+            } else if (planItemDefinition instanceof ScriptServiceTask) {
+                //ScriptServiceTask Is-A ServiceTask thus should be check before
+                planItem.setBehavior(activityBehaviorFactory.createScriptTaskActivityBehavior(planItem, (ScriptServiceTask) planItemDefinition));
 
-                                } else if (ImplementationType.IMPLEMENTATION_TYPE_EXPRESSION.equals(serviceTask.getImplementationType())) {
-                                    planItem.setBehavior(activityBehaviorFactory.createPlanItemExpressionActivityBehavior(planItem, serviceTask));
+            } else if (planItemDefinition instanceof ServiceTask) {
+                ServiceTask serviceTask = (ServiceTask) planItemDefinition;
 
-                                } else if (ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION.equals(serviceTask.getImplementationType())) {
-                                    planItem.setBehavior(activityBehaviorFactory.createPlanItemDelegateExpressionActivityBehavior(planItem, serviceTask));
-                                }
+                switch (serviceTask.getType()) {
+                    case HttpServiceTask.HTTP_TASK:
+                        planItem.setBehavior(activityBehaviorFactory.createHttpActivityBehavior(planItem, serviceTask));
+                        break;
+                    default:
+                        // java task type was not set in the version <= 6.2.0 that's why we have to assume that default
+                        // service task type is java
+                        if (StringUtils.isNotEmpty(serviceTask.getImplementation())) {
+                            if (ImplementationType.IMPLEMENTATION_TYPE_CLASS.equals(serviceTask.getImplementationType())) {
+                                planItem.setBehavior(activityBehaviorFactory.createCmmnClassDelegate(planItem, serviceTask));
+
+                            } else if (ImplementationType.IMPLEMENTATION_TYPE_EXPRESSION.equals(serviceTask.getImplementationType())) {
+                                planItem.setBehavior(activityBehaviorFactory.createPlanItemExpressionActivityBehavior(planItem, serviceTask));
+
+                            } else if (ImplementationType.IMPLEMENTATION_TYPE_DELEGATEEXPRESSION.equals(serviceTask.getImplementationType())) {
+                                planItem.setBehavior(activityBehaviorFactory.createPlanItemDelegateExpressionActivityBehavior(planItem, serviceTask));
                             }
-                            break;
-                    }
-                } else {
-                    planItem.setBehavior(activityBehaviorFactory.createTaskActivityBehavior(planItem, task));
+                        }
+                        break;
                 }
+            } else if (planItemDefinition instanceof Task) {
+                planItem.setBehavior(activityBehaviorFactory.createTaskActivityBehavior(planItem, (Task) planItemDefinition));
             }
 
             if (planItemDefinition instanceof PlanFragment) {
@@ -185,6 +191,7 @@ public class CmmnParserImpl implements CmmnParser {
             }
         }
     }
+
     public void processDI(CmmnModel cmmnModel, List<CaseDefinitionEntity> caseDefinitions) {
 
         if (caseDefinitions.isEmpty()) {

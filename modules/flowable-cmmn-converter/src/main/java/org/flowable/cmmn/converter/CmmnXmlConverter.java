@@ -38,8 +38,8 @@ import org.flowable.cmmn.model.SentryOnPart;
 import org.flowable.cmmn.model.Stage;
 import org.flowable.cmmn.model.Task;
 import org.flowable.cmmn.model.TimerEventListener;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.io.InputStreamProvider;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.io.InputStreamProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -95,6 +95,7 @@ public class CmmnXmlConverter implements CmmnXmlConstants {
         addElementConverter(new RequiredRuleXmlConverter());
         addElementConverter(new RepetitionRuleXmlConverter());
         addElementConverter(new ManualActivationRuleXmlConverter());
+        addElementConverter(new CompletionNeutralRuleXmlConverter());
         addElementConverter(new SentryXmlConverter());
         addElementConverter(new EntryCriterionXmlConverter());
         addElementConverter(new ExitCriterionXmlConverter());
@@ -106,6 +107,7 @@ public class CmmnXmlConverter implements CmmnXmlConstants {
         addElementConverter(new DecisionXmlConverter());
         addElementConverter(new DecisionTaskXmlConverter());
         addElementConverter(new TimerEventListenerXmlConverter());
+        addElementConverter(new UserEventListenerXmlConverter());
         addElementConverter(new PlanItemStartTriggerXmlConverter());
         addElementConverter(new CmmnDiShapeXmlConverter());
         addElementConverter(new CmmnDiEdgeXmlConverter());
@@ -115,6 +117,7 @@ public class CmmnXmlConverter implements CmmnXmlConstants {
         addElementConverter(new FieldExtensionXmlConverter());
         addElementConverter(new FlowableHttpResponseHandlerXmlConverter());
         addElementConverter(new FlowableHttpRequestHandlerXmlConverter());
+        addElementConverter(new ParameterMappingXMLConverter());
 
         addTextConverter(new StandardEventXmlConverter());
         addTextConverter(new ProcessRefExpressionXmlConverter());
@@ -290,7 +293,8 @@ public class CmmnXmlConverter implements CmmnXmlConstants {
                 CaseExport.writeCase(caseModel, xtw);
 
                 Stage planModel = caseModel.getPlanModel();
-                StageExport.writeStage(planModel, xtw);
+
+                StageExport.getInstance().writePlanItemDefinition(planModel, xtw);
 
                 // end case element
                 xtw.writeEndElement();
@@ -476,7 +480,6 @@ public class CmmnXmlConverter implements CmmnXmlConstants {
                     planItem.addEntryCriterion(criterion);
                 }
             }
-
         }
 
     }

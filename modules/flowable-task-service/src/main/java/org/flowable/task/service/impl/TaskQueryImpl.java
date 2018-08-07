@@ -15,12 +15,14 @@ package org.flowable.task.service.impl;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.db.SuspensionState;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.scope.ScopeTypes;
+import org.flowable.common.engine.impl.db.SuspensionState;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.IdmIdentityService;
 import org.flowable.task.api.DelegationState;
@@ -28,7 +30,6 @@ import org.flowable.task.api.Task;
 import org.flowable.task.api.TaskQuery;
 import org.flowable.task.service.TaskServiceConfiguration;
 import org.flowable.task.service.impl.util.CommandContextUtil;
-import org.flowable.variable.api.type.VariableScopeType;
 import org.flowable.variable.api.types.VariableTypes;
 import org.flowable.variable.service.impl.AbstractVariableQueryImpl;
 import org.flowable.variable.service.impl.QueryVariableValue;
@@ -60,6 +61,7 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     protected String assigneeLikeIgnoreCase;
     protected List<String> assigneeIds;
     protected String involvedUser;
+    protected Set<String> involvedGroups;
     protected String owner;
     protected String ownerLike;
     protected String ownerLikeIgnoreCase;
@@ -84,6 +86,7 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     protected Date createTimeBefore;
     protected Date createTimeAfter;
     protected String category;
+    protected String taskDefinitionId;
     protected String key;
     protected String keyLike;
     protected String processDefinitionKey;
@@ -362,7 +365,7 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
             throw new FlowableIllegalArgumentException("AssigneeLike is null");
         }
         if (orActive) {
-            currentOrQueryObject.assigneeLike = assignee;
+            currentOrQueryObject.assigneeLike = assigneeLike;
         } else {
             this.assigneeLike = assigneeLike;
         }
@@ -505,6 +508,22 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
             currentOrQueryObject.involvedUser = involvedUser;
         } else {
             this.involvedUser = involvedUser;
+        }
+        return this;
+    }
+
+    @Override
+    public TaskQueryImpl taskInvolvedGroups(Set<String> involvedGroups) {
+        if (involvedGroups == null) {
+            throw new FlowableIllegalArgumentException("Involved groups are null");
+        }
+        if (involvedGroups.isEmpty()) {
+            throw new FlowableIllegalArgumentException("Involved groups are empty");
+        }
+        if (orActive) {
+            currentOrQueryObject.involvedGroups = involvedGroups;
+        } else {
+            this.involvedGroups = involvedGroups;
         }
         return this;
     }
@@ -691,10 +710,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     public TaskQuery caseInstanceId(String caseInstanceId) {
         if (orActive) {
             currentOrQueryObject.scopeId(caseInstanceId);
-            currentOrQueryObject.scopeType(VariableScopeType.CMMN);
+            currentOrQueryObject.scopeType(ScopeTypes.CMMN);
         } else {
             this.scopeId(caseInstanceId);
-            this.scopeType(VariableScopeType.CMMN);
+            this.scopeType(ScopeTypes.CMMN);
         }
         return this;
     }
@@ -703,10 +722,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     public TaskQuery caseDefinitionId(String caseDefinitionId) {
         if (orActive) {
             currentOrQueryObject.scopeDefinitionId(caseDefinitionId);
-            currentOrQueryObject.scopeType(VariableScopeType.CMMN);
+            currentOrQueryObject.scopeType(ScopeTypes.CMMN);
         } else {
             this.scopeDefinitionId(caseDefinitionId);
-            this.scopeType(VariableScopeType.CMMN);
+            this.scopeType(ScopeTypes.CMMN);
         }
         return this;
     }
@@ -715,10 +734,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     public TaskQuery planItemInstanceId(String planItemInstanceId) {
         if (orActive) {
             currentOrQueryObject.subScopeId(planItemInstanceId);
-            currentOrQueryObject.scopeType(VariableScopeType.CMMN);
+            currentOrQueryObject.scopeType(ScopeTypes.CMMN);
         } else {
             this.subScopeId(planItemInstanceId);
-            this.scopeType(VariableScopeType.CMMN);
+            this.scopeType(ScopeTypes.CMMN);
         }
         return this;
     }
@@ -799,6 +818,16 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
             currentOrQueryObject.category = category;
         } else {
             this.category = category;
+        }
+        return this;
+    }
+
+    @Override
+    public TaskQuery taskDefinitionId(String taskDefinitionId) {
+        if (orActive) {
+            currentOrQueryObject.taskDefinitionId = taskDefinitionId;
+        } else {
+            this.taskDefinitionId = taskDefinitionId;
         }
         return this;
     }
@@ -1539,17 +1568,25 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
         ensureVariablesInitialized();
         checkQueryOk();
         List<Task> tasks = null;
+        TaskServiceConfiguration taskServiceConfiguration = CommandContextUtil.getTaskServiceConfiguration(commandContext);
+        if (taskServiceConfiguration.getTaskQueryInterceptor() != null) {
+            taskServiceConfiguration.getTaskQueryInterceptor().beforeTaskQueryExecute(this);
+        }
+        
         if (includeTaskLocalVariables || includeProcessVariables || includeIdentityLinks) {
             tasks = CommandContextUtil.getTaskEntityManager(commandContext).findTasksWithRelatedEntitiesByQueryCriteria(this);
         } else {
             tasks = CommandContextUtil.getTaskEntityManager(commandContext).findTasksByQueryCriteria(this);
         }
 
-        TaskServiceConfiguration taskServiceConfiguration = CommandContextUtil.getTaskServiceConfiguration();
         if (tasks != null && taskServiceConfiguration.getInternalTaskLocalizationManager() != null && taskServiceConfiguration.isEnableLocalization()) {
             for (Task task : tasks) {
                 taskServiceConfiguration.getInternalTaskLocalizationManager().localize(task, locale, withLocalizationFallback);
             }
+        }
+        
+        if (taskServiceConfiguration.getTaskQueryInterceptor() != null) {
+            taskServiceConfiguration.getTaskQueryInterceptor().afterTaskQueryExecute(this, tasks);
         }
 
         return tasks;
@@ -1559,6 +1596,12 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
     public long executeCount(CommandContext commandContext) {
         ensureVariablesInitialized();
         checkQueryOk();
+        
+        TaskServiceConfiguration taskServiceConfiguration = CommandContextUtil.getTaskServiceConfiguration(commandContext);
+        if (taskServiceConfiguration.getTaskQueryInterceptor() != null) {
+            taskServiceConfiguration.getTaskQueryInterceptor().beforeTaskQueryExecute(this);
+        }
+        
         return CommandContextUtil.getTaskEntityManager(commandContext).findTaskCountByQueryCriteria(this);
     }
 
@@ -1668,6 +1711,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
         return createTimeAfter;
     }
 
+    public String getTaskDefinitionId() {
+        return taskDefinitionId;
+    }
+
     public String getKey() {
         return key;
     }
@@ -1738,6 +1785,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
 
     public String getInvolvedUser() {
         return involvedUser;
+    }
+
+    public Set<String> getInvolvedGroups() {
+        return involvedGroups;
     }
 
     public String getOwner() {

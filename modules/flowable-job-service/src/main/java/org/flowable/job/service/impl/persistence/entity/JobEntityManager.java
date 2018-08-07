@@ -14,7 +14,7 @@ package org.flowable.job.service.impl.persistence.entity;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.persistence.entity.EntityManager;
+import org.flowable.common.engine.impl.persistence.entity.EntityManager;
 import org.flowable.job.api.Job;
 import org.flowable.job.service.impl.JobQueryImpl;
 
@@ -40,5 +40,5 @@ public interface JobEntityManager extends EntityManager<JobEntity>, JobInfoEntit
      * Same as {@link #findJobsByQueryCriteria(JobQueryImpl)}, but only returns a count and not the instances itself.
      */
     long findJobCountByQueryCriteria(JobQueryImpl jobQuery);
-
+    
 }

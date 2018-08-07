@@ -17,14 +17,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
+import org.flowable.common.engine.api.query.QueryProperty;
+import org.flowable.common.rest.api.DataResponse;
 import org.flowable.engine.RuntimeService;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.common.api.query.QueryProperty;
 import org.flowable.engine.impl.ExecutionQueryProperty;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ExecutionQuery;
-import org.flowable.rest.api.DataResponse;
+import org.flowable.rest.service.api.BpmnRestApiInterceptor;
 import org.flowable.rest.service.api.RestResponseFactory;
 import org.flowable.rest.service.api.engine.variable.QueryVariable;
 import org.flowable.rest.service.api.engine.variable.QueryVariable.QueryVariableOperation;
@@ -50,6 +51,9 @@ public class ExecutionBaseResource {
 
     @Autowired
     protected RuntimeService runtimeService;
+    
+    @Autowired(required=false)
+    protected BpmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<ExecutionResponse> getQueryResponse(ExecutionQueryRequest queryRequest, Map<String, String> requestParams, String serverRootUrl) {
 
@@ -102,6 +106,10 @@ public class ExecutionBaseResource {
 
         if (Boolean.TRUE.equals(queryRequest.getWithoutTenantId())) {
             query.executionWithoutTenantId();
+        }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessExecutionInfoWithQuery(query);
         }
 
         return new ExecutionPaginateList(restResponseFactory).paginateList(requestParams, queryRequest, query, "processInstanceId", allowedSortProperties);
@@ -185,6 +193,11 @@ public class ExecutionBaseResource {
         if (execution == null) {
             throw new FlowableObjectNotFoundException("Could not find an execution with id '" + executionId + "'.", Execution.class);
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessExecutionInfoById(execution);
+        }
+        
         return execution;
     }
 

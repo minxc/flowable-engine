@@ -22,11 +22,11 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.flowable.bpmn.model.FlowNode;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEntityEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEntityEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEntityEvent;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEntityEvent;
+import org.flowable.common.engine.api.delegate.event.FlowableEvent;
+import org.flowable.engine.delegate.event.AbstractFlowableEngineEventListener;
 import org.flowable.engine.delegate.event.FlowableActivityCancelledEvent;
 import org.flowable.engine.delegate.event.FlowableCancelledEvent;
 import org.flowable.engine.delegate.event.FlowableProcessStartedEvent;
@@ -778,7 +778,7 @@ public class ProcessInstanceEventsTest extends PluggableFlowableTestCase {
         }
     }
 
-    private class TestInitializedEntityEventListener implements FlowableEventListener {
+    private class TestInitializedEntityEventListener extends AbstractFlowableEngineEventListener {
 
         private List<FlowableEvent> eventsReceived;
 

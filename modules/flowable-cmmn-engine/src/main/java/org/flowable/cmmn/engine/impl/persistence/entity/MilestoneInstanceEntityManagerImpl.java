@@ -20,7 +20,7 @@ import org.flowable.cmmn.api.runtime.MilestoneInstanceQuery;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.MilestoneInstanceDataManager;
 import org.flowable.cmmn.engine.impl.runtime.MilestoneInstanceQueryImpl;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 
 /**
  * @author Joram Barrez
@@ -55,13 +55,13 @@ public class MilestoneInstanceEntityManagerImpl extends AbstractCmmnEntityManage
     }
     
     @Override
-    public List<MilestoneInstanceEntity> findMilestoneInstancesByCaseInstanceId(String caseInstanceId) {
-        return milestoneInstanceDataManager.findMilestoneInstancesByCaseInstanceId(caseInstanceId);
+    public void deleteByCaseDefinitionId(String caseDefinitionId) {
+        milestoneInstanceDataManager.deleteByCaseDefinitionId(caseDefinitionId);
     }
     
     @Override
-    public void deleteByCaseDefinitionId(String caseDefinitionId) {
-        milestoneInstanceDataManager.deleteByCaseDefinitionId(caseDefinitionId);
+    public void deleteByCaseInstanceId(String caseInstanceId) {
+        milestoneInstanceDataManager.deleteByCaseInstanceId(caseInstanceId);
     }
     
     public MilestoneInstanceDataManager getMilestoneInstanceDataManager() {

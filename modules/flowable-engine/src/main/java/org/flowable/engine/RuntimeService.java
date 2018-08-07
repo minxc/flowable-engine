@@ -18,13 +18,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.flowable.bpmn.model.FlowNode;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEventDispatcher;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEvent;
+import org.flowable.common.engine.api.delegate.event.FlowableEventDispatcher;
+import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.runtime.ChangeActivityStateBuilder;
 import org.flowable.engine.runtime.DataObject;
 import org.flowable.engine.runtime.EventSubscriptionQuery;
@@ -36,9 +36,10 @@ import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
 import org.flowable.engine.task.Event;
-import org.flowable.form.model.FormModel;
+import org.flowable.form.api.FormInfo;
 import org.flowable.identitylink.api.IdentityLink;
-import org.flowable.identitylink.service.IdentityLinkType;
+import org.flowable.identitylink.api.IdentityLinkType;
+import org.flowable.variable.api.delegate.VariableScope;
 import org.flowable.variable.api.persistence.entity.VariableInstance;
 
 /**
@@ -321,7 +322,7 @@ public interface RuntimeService {
      * @param processInstanceId
      *            id of process instance for which the start form should be retrieved.
      */
-    FormModel getStartFormModel(String processDefinitionId, String processInstanceId);
+    FormInfo getStartFormModel(String processDefinitionId, String processInstanceId);
 
     /**
      * Delete an existing runtime process instance.
@@ -357,6 +358,17 @@ public interface RuntimeService {
 
     /**
      * Sends an external trigger to an activity instance that is waiting inside the given execution.
+     * The waiting execution is notified <strong>asynchronously</strong>.
+     *
+     * @param executionId
+     *            id of execution to signal, cannot be null.
+     * @throws FlowableObjectNotFoundException
+     *             when no execution is found for the given executionId.
+     */
+    void triggerAsync(String executionId);
+
+    /**
+     * Sends an external trigger to an activity instance that is waiting inside the given execution.
      * 
      * @param executionId
      *            id of execution to signal, cannot be null.
@@ -366,6 +378,19 @@ public interface RuntimeService {
      *             when no execution is found for the given executionId.
      */
     void trigger(String executionId, Map<String, Object> processVariables);
+
+    /**
+     * Sends an external trigger to an activity instance that is waiting inside the given execution.
+     * The waiting execution is notified <strong>asynchronously</strong>.
+     *
+     * @param executionId
+     *            id of execution to signal, cannot be null.
+     * @param processVariables
+     *            a map of process variables
+     * @throws FlowableObjectNotFoundException
+     *             when no execution is found for the given executionId.
+     */
+    void triggerAsync(String executionId, Map<String, Object> processVariables);
 
     /**
      * Similar to {@link #trigger(String, Map)}, but with an extra parameter that allows to pass transient variables.
@@ -414,7 +439,7 @@ public interface RuntimeService {
     void addGroupIdentityLink(String processInstanceId, String groupId, String identityLinkType);
 
     /**
-     * Convenience shorthand for {@link #addUserIdentityLink(String, String, String)}; with type {@link IdentityLinkType#CANDIDATE}
+     * Convenience shorthand for {@link #addUserIdentityLink(String, String, String)}; with type {@link IdentityLinkType#PARTICIPANT}
      * 
      * @param processInstanceId
      *            id of the process instance, cannot be null.
@@ -426,7 +451,7 @@ public interface RuntimeService {
     void addParticipantUser(String processInstanceId, String userId);
 
     /**
-     * Convenience shorthand for {@link #addGroupIdentityLink(String, String, String)}; with type {@link IdentityLinkType#CANDIDATE}
+     * Convenience shorthand for {@link #addGroupIdentityLink(String, String, String)}; with type {@link IdentityLinkType#PARTICIPANT}
      * 
      * @param processInstanceId
      *            id of the process instance, cannot be null.
@@ -438,7 +463,7 @@ public interface RuntimeService {
     void addParticipantGroup(String processInstanceId, String groupId);
 
     /**
-     * Convenience shorthand for {@link #deleteUserIdentityLink(String, String, String)}; with type {@link IdentityLinkType#CANDIDATE}
+     * Convenience shorthand for {@link #deleteUserIdentityLink(String, String, String)}; with type {@link IdentityLinkType#PARTICIPANT}
      * 
      * @param processInstanceId
      *            id of the process instance, cannot be null.
@@ -450,7 +475,7 @@ public interface RuntimeService {
     void deleteParticipantUser(String processInstanceId, String userId);
 
     /**
-     * Convenience shorthand for {@link #deleteGroupIdentityLink(String, String, String)}; with type {@link IdentityLinkType#CANDIDATE}
+     * Convenience shorthand for {@link #deleteGroupIdentityLink(String, String, String)}; with type {@link IdentityLinkType#PARTICIPANT}
      * 
      * @param processInstanceId
      *            id of the process instance, cannot be null.

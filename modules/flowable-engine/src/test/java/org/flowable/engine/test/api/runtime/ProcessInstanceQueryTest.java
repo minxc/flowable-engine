@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.history.HistoryLevel;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
@@ -1783,7 +1783,7 @@ public class ProcessInstanceQueryTest extends PluggableFlowableTestCase {
 
     public void testQueryByProcessInstanceIdsEmpty() {
         try {
-            runtimeService.createProcessInstanceQuery().processInstanceIds(new HashSet<String>());
+            runtimeService.createProcessInstanceQuery().processInstanceIds(new HashSet<>());
             fail("ActivitiException expected");
         } catch (FlowableIllegalArgumentException re) {
             assertTextPresent("Set of process instance ids is empty", re.getMessage());

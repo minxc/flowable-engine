@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.flowable.engine.impl.RuntimeServiceImpl;
 import org.flowable.engine.runtime.ChangeActivityStateBuilder;
@@ -79,6 +80,23 @@ public class ChangeActivityStateBuilderImpl implements ChangeActivityStateBuilde
         moveActivityIdList.add(new MoveActivityIdContainer(currentActivityId, newActivityIds));
         return this;
     }
+    
+    @Override
+    public ChangeActivityStateBuilder moveActivityIdToParentActivityId(String currentActivityId, String newActivityId) {
+        MoveActivityIdContainer moveActivityIdContainer = new MoveActivityIdContainer(currentActivityId, newActivityId);
+        moveActivityIdContainer.setMoveToParentProcess(true);
+        moveActivityIdList.add(moveActivityIdContainer);
+        return this;
+    }
+    
+    @Override
+    public ChangeActivityStateBuilder moveActivityIdToSubProcessInstanceActivityId(String currentActivityId, String newActivityId, String callActivityId) {
+        MoveActivityIdContainer moveActivityIdContainer = new MoveActivityIdContainer(currentActivityId, newActivityId);
+        moveActivityIdContainer.setMoveToSubProcessInstance(true);
+        moveActivityIdContainer.setCallActivityId(callActivityId);
+        moveActivityIdList.add(moveActivityIdContainer);
+        return this;
+    }
 
     @Override
     public ChangeActivityStateBuilder processVariable(String processVariableName, Object processVariableValue) {
@@ -106,7 +124,7 @@ public class ChangeActivityStateBuilderImpl implements ChangeActivityStateBuilde
         if (localVariables.containsKey(startActivityId)) {
             localVariableMap = localVariables.get(startActivityId);
         } else {
-            localVariableMap = new HashMap<String, Object>();
+            localVariableMap = new HashMap<>();
         }
         
         localVariableMap.put(localVariableName, localVariableValue);
@@ -155,86 +173,85 @@ public class ChangeActivityStateBuilderImpl implements ChangeActivityStateBuilde
     public class MoveExecutionIdContainer {
         
         protected List<String> executionIds;
-        protected String singleExecutionId;
-        protected String moveToActivityId;
         protected List<String> moveToActivityIds;
         
         public MoveExecutionIdContainer(String singleExecutionId, String moveToActivityId) {
-            this.singleExecutionId = singleExecutionId;
-            this.moveToActivityId = moveToActivityId;
+            this.executionIds = Collections.singletonList(singleExecutionId);
+            this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         }
         
         public MoveExecutionIdContainer(List<String> executionIds, String moveToActivityId) {
             this.executionIds = executionIds;
-            this.moveToActivityId = moveToActivityId;
+            this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         }
         
         public MoveExecutionIdContainer(String singleExecutionId, List<String> moveToActivityIds) {
-            this.singleExecutionId = singleExecutionId;
+            this.executionIds = Collections.singletonList(singleExecutionId);
             this.moveToActivityIds = moveToActivityIds;
         }
         
         public List<String> getExecutionIds() {
-            if (singleExecutionId != null) {
-                return Collections.singletonList(singleExecutionId);
-            } else if (executionIds != null) {
-                return executionIds;
-            } else {
-                return new ArrayList<>();
-            }    
+            return Optional.ofNullable(executionIds).orElse(Collections.EMPTY_LIST);
         }
         
         public List<String> getMoveToActivityIds() {
-            if (moveToActivityId != null) {
-                return Collections.singletonList(moveToActivityId);
-            } else if (moveToActivityIds != null) {
-                return moveToActivityIds;
-            } else {
-                return new ArrayList<>();
-            }
+            return Optional.ofNullable(moveToActivityIds).orElse(Collections.EMPTY_LIST);
         }
     }
     
     public class MoveActivityIdContainer {
         
         protected List<String> activityIds;
-        protected String singleActivityId;
-        protected String moveToActivityId;
         protected List<String> moveToActivityIds;
+        protected boolean moveToParentProcess;
+        protected boolean moveToSubProcessInstance;
+        protected String callActivityId;
         
         public MoveActivityIdContainer(String singleActivityId, String moveToActivityId) {
-            this.singleActivityId = singleActivityId;
-            this.moveToActivityId = moveToActivityId;
+            this.activityIds = Collections.singletonList(singleActivityId);
+            this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         }
         
         public MoveActivityIdContainer(List<String> activityIds, String moveToActivityId) {
             this.activityIds = activityIds;
-            this.moveToActivityId = moveToActivityId;
+            this.moveToActivityIds = Collections.singletonList(moveToActivityId);
         }
         
         public MoveActivityIdContainer(String singleActivityId, List<String> moveToActivityIds) {
-            this.singleActivityId = singleActivityId;
+            this.activityIds = Collections.singletonList(singleActivityId);
             this.moveToActivityIds = moveToActivityIds;
         }
         
         public List<String> getActivityIds() {
-            if (singleActivityId != null) {
-                return Collections.singletonList(singleActivityId);
-            } else if (activityIds != null) {
-                return activityIds;
-            } else {
-                return new ArrayList<>();
-            }
+            return Optional.ofNullable(activityIds).orElse(Collections.EMPTY_LIST);
         }
 
         public List<String> getMoveToActivityIds() {
-            if (moveToActivityId != null) {
-                return Collections.singletonList(moveToActivityId);
-            } else if (moveToActivityIds != null) {
-                return moveToActivityIds;
-            } else {
-                return new ArrayList<>();
-            }
+            return Optional.ofNullable(moveToActivityIds).orElse(Collections.EMPTY_LIST);
+        }
+
+        public boolean isMoveToParentProcess() {
+            return moveToParentProcess;
+        }
+
+        public void setMoveToParentProcess(boolean moveToParentProcess) {
+            this.moveToParentProcess = moveToParentProcess;
+        }
+
+        public boolean isMoveToSubProcessInstance() {
+            return moveToSubProcessInstance;
+        }
+
+        public void setMoveToSubProcessInstance(boolean moveToSubProcessInstance) {
+            this.moveToSubProcessInstance = moveToSubProcessInstance;
+        }
+
+        public String getCallActivityId() {
+            return callActivityId;
+        }
+
+        public void setCallActivityId(String callActivityId) {
+            this.callActivityId = callActivityId;
         }
     }
 }

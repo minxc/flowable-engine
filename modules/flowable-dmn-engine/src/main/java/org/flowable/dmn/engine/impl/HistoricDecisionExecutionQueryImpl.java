@@ -16,13 +16,13 @@ package org.flowable.dmn.engine.impl;
 import java.util.List;
 import java.util.Set;
 
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.impl.AbstractQuery;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.dmn.api.DmnHistoricDecisionExecution;
 import org.flowable.dmn.api.DmnHistoricDecisionExecutionQuery;
 import org.flowable.dmn.engine.impl.util.CommandContextUtil;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.AbstractQuery;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 
 /**
  * @author Tijs Rademakers
@@ -38,6 +38,7 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
     protected String instanceId;
     protected String executionId;
     protected String activityId;
+    protected String scopeType;
     protected Boolean failed;
     protected String tenantId;
     protected String tenantIdLike;
@@ -117,6 +118,15 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
             throw new FlowableIllegalArgumentException("activityId is null");
         }
         this.activityId = activityId;
+        return this;
+    }
+    
+    @Override
+    public DmnHistoricDecisionExecutionQuery scopeType(String scopeType) {
+        if (scopeType == null) {
+            throw new FlowableIllegalArgumentException("scopeType is null");
+        }
+        this.scopeType = scopeType;
         return this;
     }
     
@@ -221,6 +231,10 @@ public class HistoricDecisionExecutionQueryImpl extends AbstractQuery<DmnHistori
 
     public String getActivityId() {
         return activityId;
+    }
+    
+    public String getScopeType() {
+        return scopeType;
     }
     
     public Boolean getFailed() {

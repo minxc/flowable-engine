@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.flowable.cmmn.engine.impl.util.CommandContextUtil;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.variable.api.type.VariableScopeType;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.scope.ScopeTypes;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.variable.service.impl.persistence.entity.VariableInstanceEntity;
 
 /**
@@ -40,7 +40,7 @@ public class GetLocalVariablesCmd implements Command<Map<String, Object>> {
             throw new FlowableIllegalArgumentException("planItemInstanceId is null");
         }
         List<VariableInstanceEntity> variableInstanceEntities = CommandContextUtil.getVariableService(commandContext)
-                .findVariableInstanceBySubScopeIdAndScopeType(planItemInstanceId, VariableScopeType.CMMN);
+                .findVariableInstanceBySubScopeIdAndScopeType(planItemInstanceId, ScopeTypes.CMMN);
         Map<String, Object> variables = new HashMap<>(variableInstanceEntities.size());
         for (VariableInstanceEntity variableInstanceEntity : variableInstanceEntities) {
             variables.put(variableInstanceEntity.getName(), variableInstanceEntity.getValue());

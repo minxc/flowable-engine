@@ -22,10 +22,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 
-import org.flowable.engine.common.AbstractEngineConfiguration;
-import org.flowable.engine.common.impl.context.Context;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.EngineConfigurationConstants;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.EngineConfigurationConstants;
 import org.flowable.engine.impl.bpmn.deployer.ParsedDeployment;
 import org.flowable.engine.impl.bpmn.deployer.ParsedDeploymentBuilder;
 import org.flowable.engine.impl.bpmn.deployer.ParsedDeploymentBuilderFactory;
@@ -60,7 +59,7 @@ public class ParsedDeploymentTest extends PluggableFlowableTestCase {
     public void setUp() {
         CommandContext commandContext = processEngineConfiguration.getCommandContextFactory().createCommandContext(null);
         if (commandContext.getEngineConfigurations() == null) {
-            commandContext.setEngineConfigurations(new HashMap<String, AbstractEngineConfiguration>());
+            commandContext.setEngineConfigurations(new HashMap<>());
         }
         commandContext.getEngineConfigurations().put(EngineConfigurationConstants.KEY_PROCESS_ENGINE_CONFIG, processEngineConfiguration);
         Context.setCommandContext(commandContext);

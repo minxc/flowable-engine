@@ -12,10 +12,14 @@
  */
 package org.flowable.engine.impl.history.async.json.transformer;
 
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getDateFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getIntegerFromJson;
+import static org.flowable.job.service.impl.history.async.util.AsyncHistoryJsonUtil.getStringFromJson;
+
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.history.async.HistoryJsonConstants;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.job.service.impl.persistence.entity.HistoryJobEntity;
@@ -53,6 +57,7 @@ public class TaskPropertyChangedHistoryJsonTransformer extends AbstractNeedsTask
                 historicTaskInstance.setFormKey(getStringFromJson(historicalData, HistoryJsonConstants.FORM_KEY));
                 historicTaskInstance.setParentTaskId(getStringFromJson(historicalData, HistoryJsonConstants.PARENT_TASK_ID));
                 historicTaskInstance.setTaskDefinitionKey(getStringFromJson(historicalData, HistoryJsonConstants.TASK_DEFINITION_KEY));
+                historicTaskInstance.setTaskDefinitionId(getStringFromJson(historicalData, HistoryJsonConstants.TASK_DEFINITION_ID));
                 historicTaskInstance.setProcessDefinitionId(getStringFromJson(historicalData, HistoryJsonConstants.PROCESS_DEFINITION_ID));
                 historicTaskInstance.setLastUpdateTime(lastUpdateTime);
             

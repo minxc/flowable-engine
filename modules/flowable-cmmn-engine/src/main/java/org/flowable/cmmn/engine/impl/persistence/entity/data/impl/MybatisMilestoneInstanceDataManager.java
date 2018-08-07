@@ -21,7 +21,7 @@ import org.flowable.cmmn.engine.impl.persistence.entity.MilestoneInstanceEntityI
 import org.flowable.cmmn.engine.impl.persistence.entity.data.AbstractCmmnDataManager;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.MilestoneInstanceDataManager;
 import org.flowable.cmmn.engine.impl.runtime.MilestoneInstanceQueryImpl;
-import org.flowable.engine.common.impl.db.CachedEntityMatcherAdapter;
+import org.flowable.common.engine.impl.persistence.cache.CachedEntityMatcherAdapter;
 
 /**
  * @author Joram Barrez
@@ -57,15 +57,14 @@ public class MybatisMilestoneInstanceDataManager extends AbstractCmmnDataManager
     }
     
     @Override
-    public List<MilestoneInstanceEntity> findMilestoneInstancesByCaseInstanceId(String caseInstanceId) {
-        return getList("selectMilestoneInstancesByCaseInstanceId", caseInstanceId, milestoneInstanceByCaseInstanceIdCachedEntityMatcher, true);
-    }
-    
-    @Override
     public void deleteByCaseDefinitionId(String caseDefinitionId) {
         getDbSqlSession().delete("deleteMilestoneInstanceByCaseDefinitionId", caseDefinitionId, getManagedEntityClass());
     }
     
+    @Override
+    public void deleteByCaseInstanceId(String caseInstanceId) {
+        bulkDelete("deleteMilestoneInstanceByCaseInstanceId", milestoneInstanceByCaseInstanceIdCachedEntityMatcher, caseInstanceId);
+    }
     
     public static class MilestoneInstanceByCaseInstanceIdCachedEntityMatcher extends CachedEntityMatcherAdapter<MilestoneInstanceEntity> {
 

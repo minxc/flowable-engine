@@ -20,7 +20,7 @@ import org.flowable.cmmn.api.history.HistoricMilestoneInstanceQuery;
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
 import org.flowable.cmmn.engine.impl.history.HistoricMilestoneInstanceQueryImpl;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.HistoricMilestoneInstanceDataManager;
-import org.flowable.engine.common.impl.persistence.entity.data.DataManager;
+import org.flowable.common.engine.impl.persistence.entity.data.DataManager;
 
 /**
  * @author Joram Barrez
@@ -52,11 +52,6 @@ public class HistoricMilestoneInstanceEntityManagerImpl extends AbstractCmmnEnti
     @Override
     public long findHistoricMilestoneInstanceCountByQueryCriteria(HistoricMilestoneInstanceQuery query) {
         return historicMilestoneInstanceDataManager.findHistoricMilestoneInstancesCountByQueryCriteria((HistoricMilestoneInstanceQueryImpl) query);
-    }
-    
-    @Override
-    public void deleteByCaseDefinitionId(String caseDefinitionId) {
-        historicMilestoneInstanceDataManager.deleteByCaseDefinitionId(caseDefinitionId);
     }
     
     public HistoricMilestoneInstanceDataManager getHistoricMilestoneInstanceDataManager() {

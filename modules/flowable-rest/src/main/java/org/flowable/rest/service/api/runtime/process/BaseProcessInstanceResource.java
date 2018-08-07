@@ -17,14 +17,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableObjectNotFoundException;
+import org.flowable.common.engine.api.query.QueryProperty;
+import org.flowable.common.rest.api.DataResponse;
 import org.flowable.engine.RuntimeService;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.FlowableObjectNotFoundException;
-import org.flowable.engine.common.api.query.QueryProperty;
 import org.flowable.engine.impl.ProcessInstanceQueryProperty;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
-import org.flowable.rest.api.DataResponse;
+import org.flowable.rest.service.api.BpmnRestApiInterceptor;
 import org.flowable.rest.service.api.RestResponseFactory;
 import org.flowable.rest.service.api.engine.variable.QueryVariable;
 import org.flowable.rest.service.api.engine.variable.QueryVariable.QueryVariableOperation;
@@ -49,6 +50,9 @@ public class BaseProcessInstanceResource {
 
     @Autowired
     protected RuntimeService runtimeService;
+    
+    @Autowired(required=false)
+    protected BpmnRestApiInterceptor restApiInterceptor;
 
     protected DataResponse<ProcessInstanceResponse> getQueryResponse(ProcessInstanceQueryRequest queryRequest, Map<String, String> requestParams) {
 
@@ -105,6 +109,10 @@ public class BaseProcessInstanceResource {
 
         if (Boolean.TRUE.equals(queryRequest.getWithoutTenantId())) {
             query.processInstanceWithoutTenantId();
+        }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessProcessInstanceInfoWithQuery(query);
         }
 
         return new ProcessInstancePaginateList(restResponseFactory).paginateList(requestParams, queryRequest, query, "id", allowedSortProperties);
@@ -193,6 +201,11 @@ public class BaseProcessInstanceResource {
         if (processInstance == null) {
             throw new FlowableObjectNotFoundException("Could not find a process instance with id '" + processInstanceId + "'.");
         }
+        
+        if (restApiInterceptor != null) {
+            restApiInterceptor.accessProcessInstanceInfoById(processInstance);
+        }
+        
         return processInstance;
     }
 }

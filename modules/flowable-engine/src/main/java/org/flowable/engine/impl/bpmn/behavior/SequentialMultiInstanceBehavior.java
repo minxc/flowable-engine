@@ -14,8 +14,8 @@ package org.flowable.engine.impl.bpmn.behavior;
 
 import org.flowable.bpmn.model.Activity;
 import org.flowable.bpmn.model.SubProcess;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.engine.delegate.BpmnError;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.delegate.ActivityBehavior;
@@ -60,7 +60,7 @@ public class SequentialMultiInstanceBehavior extends MultiInstanceActivityBehavi
         logLoopDetails(multiInstanceRootExecution, "initialized", 0, 0, 1, nrOfInstances);
 
         if (nrOfInstances > 0) {
-            executeOriginalBehavior(execution, 0);
+            executeOriginalBehavior(execution, (ExecutionEntity) multiInstanceRootExecution, 0);
         }
 
         return nrOfInstances;
@@ -82,8 +82,6 @@ public class SequentialMultiInstanceBehavior extends MultiInstanceActivityBehavi
         logLoopDetails(execution, "instance completed", loopCounter, nrOfCompletedInstances, nrOfActiveInstances, nrOfInstances);
 
         callActivityEndListeners(execution);
-
-        // executeCompensationBoundaryEvents(execution.getCurrentFlowElement(), execution);
 
         boolean completeConditionSatisfied = completionConditionSatisfied(multiInstanceRootExecution);
         if (loopCounter >= nrOfInstances || completeConditionSatisfied) {
@@ -108,10 +106,10 @@ public class SequentialMultiInstanceBehavior extends MultiInstanceActivityBehavi
                 ExecutionEntity executionToContinue = executionEntityManager.createChildExecution(multiInstanceRootExecution);
                 executionToContinue.setCurrentFlowElement(execution.getCurrentFlowElement());
                 executionToContinue.setScope(true);
-                executeOriginalBehavior(executionToContinue, loopCounter);
+                executeOriginalBehavior(executionToContinue, multiInstanceRootExecution, loopCounter);
             } else {
                 CommandContextUtil.getHistoryManager().recordActivityEnd((ExecutionEntity) execution, null);
-                executeOriginalBehavior(execution, loopCounter);
+                executeOriginalBehavior(execution, multiInstanceRootExecution, loopCounter);
             }
 
         } catch (BpmnError error) {

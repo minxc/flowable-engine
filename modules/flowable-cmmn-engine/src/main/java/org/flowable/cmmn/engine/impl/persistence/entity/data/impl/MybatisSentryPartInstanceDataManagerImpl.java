@@ -19,7 +19,7 @@ import org.flowable.cmmn.engine.impl.persistence.entity.SentryPartInstanceEntity
 import org.flowable.cmmn.engine.impl.persistence.entity.SentryPartInstanceEntityImpl;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.AbstractCmmnDataManager;
 import org.flowable.cmmn.engine.impl.persistence.entity.data.SentryPartInstanceDataManager;
-import org.flowable.engine.common.impl.db.CachedEntityMatcherAdapter;
+import org.flowable.common.engine.impl.persistence.cache.CachedEntityMatcherAdapter;
 
 /**
  * @author Joram Barrez
@@ -56,6 +56,10 @@ public class MybatisSentryPartInstanceDataManagerImpl extends AbstractCmmnDataMa
         return getList("selectSentryPartInstanceByPlanItemInstanceId", planItemInstanceId, sentryPartByPlanItemInstanceIdEntityMatched);
     }
 
+    @Override
+    public void deleteByCaseInstanceId(String caseInstanceId) {
+        bulkDelete("deleteSentryPartInstancesByCaseInstanceId", sentryPartByCaseInstanceIdEntityMatched, caseInstanceId);
+    }
     
     
     public static class SentryPartByCaseInstanceIdEntityMatcher extends CachedEntityMatcherAdapter<SentryPartInstanceEntity> {

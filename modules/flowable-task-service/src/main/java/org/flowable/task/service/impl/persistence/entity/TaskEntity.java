@@ -16,8 +16,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.impl.db.HasRevision;
-import org.flowable.engine.common.impl.persistence.entity.Entity;
+import org.flowable.common.engine.impl.db.HasRevision;
+import org.flowable.common.engine.impl.persistence.entity.Entity;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
 import org.flowable.task.api.Task;
 import org.flowable.task.service.delegate.DelegateTask;
@@ -37,6 +37,8 @@ public interface TaskEntity extends VariableScope, Task, DelegateTask, Entity, H
 
     void setCreateTime(Date createTime);
 
+    void setTaskDefinitionId(String taskDefinitionId);
+    
     void setProcessDefinitionId(String processDefinitionId);
 
     void setEventName(String eventName);
@@ -68,4 +70,8 @@ public interface TaskEntity extends VariableScope, Task, DelegateTask, Entity, H
     void setCanceled(boolean isCanceled);
 
     void setClaimTime(Date claimTime);
+    
+    void setAssigneeValue(String assignee);
+    
+    void setOwnerValue(String owner);
 }

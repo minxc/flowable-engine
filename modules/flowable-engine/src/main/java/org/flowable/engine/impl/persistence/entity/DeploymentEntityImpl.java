@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.common.engine.api.repository.EngineResource;
+import org.flowable.common.engine.impl.persistence.entity.AbstractEntityNoRevision;
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.common.api.repository.EngineResource;
-import org.flowable.engine.common.impl.persistence.entity.AbstractEntityNoRevision;
 import org.flowable.engine.impl.util.CommandContextUtil;
 
 /**
@@ -40,6 +40,9 @@ public class DeploymentEntityImpl extends AbstractEntityNoRevision implements De
     protected Map<String, EngineResource> resources;
     protected Date deploymentTime;
     protected boolean isNew;
+    protected String derivedFrom;
+    protected String derivedFromRoot;
+    protected String parentDeploymentId;
 
     // Backwards compatibility
     protected String engineVersion;
@@ -81,6 +84,7 @@ public class DeploymentEntityImpl extends AbstractEntityNoRevision implements De
         persistentState.put("category", this.category);
         persistentState.put("key", this.key);
         persistentState.put("tenantId", tenantId);
+        persistentState.put("parentDeploymentId", parentDeploymentId);
         return persistentState;
     }
 
@@ -105,6 +109,9 @@ public class DeploymentEntityImpl extends AbstractEntityNoRevision implements De
     @Override
     @SuppressWarnings("unchecked")
     public <T> List<T> getDeployedArtifacts(Class<T> clazz) {
+        if (deployedArtifacts == null) {
+            return null;
+        }
         for (Class<?> deployedArtifactsClass : deployedArtifacts.keySet()) {
             if (clazz.isAssignableFrom(deployedArtifactsClass)) {
                 return (List<T>) deployedArtifacts.get(deployedArtifactsClass);
@@ -188,6 +195,36 @@ public class DeploymentEntityImpl extends AbstractEntityNoRevision implements De
     @Override
     public void setEngineVersion(String engineVersion) {
         this.engineVersion = engineVersion;
+    }
+    
+    @Override
+    public String getDerivedFrom() {
+        return derivedFrom;
+    }
+
+    @Override
+    public void setDerivedFrom(String derivedFrom) {
+        this.derivedFrom = derivedFrom;
+    }
+
+    @Override
+    public String getDerivedFromRoot() {
+        return derivedFromRoot;
+    }
+
+    @Override
+    public void setDerivedFromRoot(String derivedFromRoot) {
+        this.derivedFromRoot = derivedFromRoot;
+    }
+    
+    @Override
+    public String getParentDeploymentId() {
+        return parentDeploymentId;
+    }
+
+    @Override
+    public void setParentDeploymentId(String parentDeploymentId) {
+        this.parentDeploymentId = parentDeploymentId;
     }
 
     // common methods //////////////////////////////////////////////////////////

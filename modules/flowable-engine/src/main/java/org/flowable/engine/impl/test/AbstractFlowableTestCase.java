@@ -16,13 +16,23 @@ package org.flowable.engine.impl.test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.bpmn.model.EndEvent;
 import org.flowable.bpmn.model.SequenceFlow;
 import org.flowable.bpmn.model.StartEvent;
 import org.flowable.bpmn.model.UserTask;
+import org.flowable.common.engine.impl.db.DbSchemaManager;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandConfig;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandExecutor;
 import org.flowable.engine.DynamicBpmnService;
 import org.flowable.engine.FormService;
 import org.flowable.engine.HistoryService;
@@ -32,12 +42,6 @@ import org.flowable.engine.ProcessEngine;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;
-import org.flowable.engine.common.impl.db.DbSchemaManager;
-import org.flowable.engine.common.impl.history.HistoryLevel;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandConfig;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
-import org.flowable.engine.common.impl.interceptor.CommandExecutor;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.history.HistoricProcessInstance;
 import org.flowable.engine.impl.ProcessEngineImpl;
@@ -49,6 +53,7 @@ import org.flowable.engine.repository.Deployment;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.job.api.HistoryJob;
+import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.junit.Assert;
 
@@ -60,7 +65,7 @@ import junit.framework.AssertionFailedError;
  */
 public abstract class AbstractFlowableTestCase extends AbstractTestCase {
 
-    private static final List<String> TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK = new ArrayList<>();
+    protected static final List<String> TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK = new ArrayList<>();
 
     static {
         TABLENAMES_EXCLUDED_FROM_DB_CLEAN_CHECK.add("ACT_GE_PROPERTY");
@@ -534,4 +539,17 @@ public abstract class AbstractFlowableTestCase extends AbstractTestCase {
         }
     }
 
+    protected void completeTask(Task task) {
+        taskService.complete(task.getId());
+    }
+
+    protected static <T> List<T> mergeLists(List<T> list1, List<T> list2) {
+        Objects.requireNonNull(list1);
+        Objects.requireNonNull(list2);
+        return Stream.concat(list1.stream(), list2.stream()).collect(Collectors.toList());
+    }
+
+    protected static<T> Map<String, List<T>> groupListContentBy(List<T> source, Function<T, String> classifier) {
+        return source.stream().collect(Collectors.groupingBy(classifier));
+    }
 }

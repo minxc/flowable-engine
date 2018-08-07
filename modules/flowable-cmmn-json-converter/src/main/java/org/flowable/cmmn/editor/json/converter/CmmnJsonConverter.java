@@ -84,7 +84,9 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
         CaseTaskJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
         ProcessTaskJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
         TimerEventListenerJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
+        UserEventListenerJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
         TaskJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
+        ScriptTaskJsonConverter.fillTypes(convertersToCmmnMap);
 
         // milestone
         MilestoneJsonConverter.fillTypes(convertersToCmmnMap, convertersToJsonMap);
@@ -102,6 +104,7 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
 
     static {
         DI_CIRCLES.add(STENCIL_TIMER_EVENT_LISTENER);
+        DI_CIRCLES.add(STENCIL_USER_EVENT_LISTENER);
 
         DI_RECTANGLES.add(STENCIL_TASK);
         DI_RECTANGLES.add(STENCIL_TASK_HUMAN);
@@ -247,8 +250,9 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
         return modelNode;
     }
 
+    @Override
     public void processPlanItems(Stage stage, CmmnModel model, ArrayNode shapesArrayNode,
-            Map<String, CmmnModelInfo> formKeyMap, Map<String, CmmnModelInfo> decisionTableKeyMap, double subProcessX, double subProcessY) {
+                                 Map<String, CmmnModelInfo> formKeyMap, Map<String, CmmnModelInfo> decisionTableKeyMap, double subProcessX, double subProcessY) {
 
         for (PlanItem planItem : stage.getPlanItems()) {
             processPlanItem(planItem, stage, model, shapesArrayNode, formKeyMap, decisionTableKeyMap, subProcessX, subProcessY);
@@ -288,7 +292,7 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
         CmmnModel cmmnModel = new CmmnModel();
         CmmnModelIdHelper cmmnModelIdHelper = new CmmnModelIdHelper();
 
-        
+
         cmmnModel.setTargetNamespace("http://flowable.org/cmmn"); // will be overriden later with actual value
         Map<String, JsonNode> shapeMap = new HashMap<>();
         Map<String, JsonNode> sourceRefMap = new HashMap<>();
@@ -327,7 +331,7 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
         planModelStage.setName(CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_NAME, planModelShape));
         planModelStage.setDocumentation(CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_DOCUMENTATION, planModelShape));
         planModelStage.setAutoComplete(CmmnJsonConverterUtil.getPropertyValueAsBoolean(PROPERTY_IS_AUTOCOMPLETE, planModelShape));
-        
+
         String autocompleteCondition = CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_AUTOCOMPLETE_CONDITION, planModelShape);
         if (StringUtils.isNotEmpty(autocompleteCondition)) {
             planModelStage.setAutoCompleteCondition(autocompleteCondition);
@@ -372,9 +376,10 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
         return cmmnModel;
     }
 
+    @Override
     public void processJsonElements(JsonNode shapesArrayNode, JsonNode modelNode, BaseElement parentElement, Map<String, JsonNode> shapeMap,
-            Map<String, String> formMap, Map<String, String> decisionTableMap, Map<String, String> caseModelKeyMap, Map<String, String> processModelKeyMap,
-            CmmnModel cmmnModel, CmmnModelIdHelper cmmnModelIdHelper) {
+                                    Map<String, String> formMap, Map<String, String> decisionTableMap, Map<String, String> caseModelKeyMap, Map<String, String> processModelKeyMap,
+                                    CmmnModel cmmnModel, CmmnModelIdHelper cmmnModelIdHelper) {
 
         for (JsonNode shapeNode : shapesArrayNode) {
             String stencilId = CmmnJsonConverterUtil.getStencilId(shapeNode);
@@ -477,7 +482,6 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
                     PlanItemDefinition referencedPlanItemDefinition = parentStage.findPlanItemDefinition(startTriggerSourceRef);
                     timerEventListener.setTimerStartTriggerSourceRef(referencedPlanItemDefinition.getPlanItemRef());
                 }
-
             }
 
              if (CollectionUtils.isNotEmpty(planItem.getCriteriaRefs())) {

@@ -13,6 +13,7 @@
 
 package org.flowable.form.spring;
 
+import org.flowable.common.engine.impl.cfg.SpringBeanFactoryProxyMap;
 import org.flowable.form.engine.FormEngine;
 import org.flowable.form.engine.FormEngineConfiguration;
 import org.springframework.beans.BeansException;
@@ -48,10 +49,21 @@ public class FormEngineFactoryBean implements FactoryBean<FormEngine>, Disposabl
 
     @Override
     public FormEngine getObject() throws Exception {
+        configureExpressionManager();
         configureExternallyManagedTransactions();
+        
+        if (formEngineConfiguration.getBeans() == null) {
+            formEngineConfiguration.setBeans(new SpringBeanFactoryProxyMap(applicationContext));
+        }
 
         this.formEngine = formEngineConfiguration.buildFormEngine();
         return this.formEngine;
+    }
+    
+    protected void configureExpressionManager() {
+        if (formEngineConfiguration.getExpressionManager() == null && applicationContext != null) {
+            formEngineConfiguration.setExpressionManager(new SpringFormExpressionManager(applicationContext, formEngineConfiguration.getBeans()));
+        }
     }
 
     protected void configureExternallyManagedTransactions() {

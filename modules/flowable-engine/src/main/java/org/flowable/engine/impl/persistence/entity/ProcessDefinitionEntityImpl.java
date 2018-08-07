@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.common.engine.impl.db.SuspensionState;
+import org.flowable.common.engine.impl.persistence.entity.AbstractEntity;
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.common.impl.db.SuspensionState;
-import org.flowable.engine.common.impl.persistence.entity.AbstractEntity;
 import org.flowable.engine.impl.bpmn.data.IOSpecification;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.identitylink.service.impl.persistence.entity.IdentityLinkEntity;
@@ -50,6 +50,9 @@ public class ProcessDefinitionEntityImpl extends AbstractEntity implements Proce
     protected boolean isIdentityLinksInitialized;
     protected List<IdentityLinkEntity> definitionIdentityLinkEntities = new ArrayList<>();
     protected IOSpecification ioSpecification;
+    protected String derivedFrom;
+    protected String derivedFromRoot;
+    protected int derivedVersion;
 
     // Backwards compatibility
     protected String engineVersion;
@@ -231,6 +234,36 @@ public class ProcessDefinitionEntityImpl extends AbstractEntity implements Proce
     @Override
     public boolean isSuspended() {
         return suspensionState == SuspensionState.SUSPENDED.getStateCode();
+    }
+    
+    @Override
+    public String getDerivedFrom() {
+        return derivedFrom;
+    }
+
+    @Override
+    public void setDerivedFrom(String derivedFrom) {
+        this.derivedFrom = derivedFrom;
+    }
+
+    @Override
+    public String getDerivedFromRoot() {
+        return derivedFromRoot;
+    }
+
+    @Override
+    public void setDerivedFromRoot(String derivedFromRoot) {
+        this.derivedFromRoot = derivedFromRoot;
+    }
+
+    @Override
+    public int getDerivedVersion() {
+        return derivedVersion;
+    }
+
+    @Override
+    public void setDerivedVersion(int derivedVersion) {
+        this.derivedVersion = derivedVersion;
     }
 
     @Override

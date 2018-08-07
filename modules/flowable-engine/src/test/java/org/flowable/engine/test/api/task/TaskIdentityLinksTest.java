@@ -17,14 +17,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.flowable.engine.common.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.history.HistoryLevel;
 import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.task.Event;
 import org.flowable.engine.test.Deployment;
 import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.identitylink.api.history.HistoricIdentityLink;
-import org.flowable.identitylink.service.IdentityLinkType;
+import org.flowable.identitylink.api.IdentityLinkType;
 
 import junit.framework.AssertionFailedError;
 

@@ -17,14 +17,18 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.flowable.engine.common.api.FlowableException;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.test.Deployment;
-import org.flowable.identitylink.service.IdentityLinkType;
+import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.job.api.Job;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Daniel Meyer
@@ -205,7 +209,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         runtimeService.suspendProcessInstanceById(processInstance.getId());
 
         try {
-            formService.submitTaskFormData(taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult().getId(), new HashMap<String, String>());
+            formService.submitTaskFormData(taskService.createTaskQuery().processInstanceId(processInstance.getId()).singleResult().getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -229,7 +233,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         }
 
         try {
-            runtimeService.messageEventReceived("someMessage", processInstance.getId(), new HashMap<String, Object>());
+            runtimeService.messageEventReceived("someMessage", processInstance.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -285,7 +289,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         }
 
         try {
-            runtimeService.setVariables(processInstance.getId(), new HashMap<String, Object>());
+            runtimeService.setVariables(processInstance.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -293,7 +297,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         }
 
         try {
-            runtimeService.setVariablesLocal(processInstance.getId(), new HashMap<String, Object>());
+            runtimeService.setVariablesLocal(processInstance.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -309,7 +313,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         }
 
         try {
-            runtimeService.trigger(processInstance.getId(), new HashMap<String, Object>());
+            runtimeService.trigger(processInstance.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -325,7 +329,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         }
 
         try {
-            runtimeService.signalEventReceived("someSignal", processInstance.getId(), new HashMap<String, Object>());
+            runtimeService.signalEventReceived("someSignal", processInstance.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
@@ -350,7 +354,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         runtimeService.signalEventReceived(signal);
         assertEquals(1, runtimeService.createProcessInstanceQuery().count());
 
-        runtimeService.signalEventReceived(signal, new HashMap<String, Object>());
+        runtimeService.signalEventReceived(signal, new HashMap<>());
         assertEquals(1, runtimeService.createProcessInstanceQuery().count());
 
         // Activate and try again
@@ -379,7 +383,7 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         runtimeService.signalEventReceived(signal);
         assertEquals(2, runtimeService.createProcessInstanceQuery().count());
 
-        runtimeService.signalEventReceived(signal, new HashMap<String, Object>());
+        runtimeService.signalEventReceived(signal, new HashMap<>());
         assertEquals(2, runtimeService.createProcessInstanceQuery().count());
 
         // Activate and try again
@@ -592,4 +596,32 @@ public class ProcessInstanceSuspensionTest extends PluggableFlowableTestCase {
         assertEquals(0, runtimeService.createProcessInstanceQuery().count());
     }
 
+    @Deployment(resources = "org/flowable/engine/test/api/runtime/ProcessInstanceSuspensionTest.testJobNotExecutedAfterProcessInstanceSuspend.bpmn20.xml")
+    public void testJobActivationAfterProcessInstanceSuspend() {
+
+        Date now = new Date();
+        processEngineConfiguration.getClock().setCurrentTime(now);
+
+        // Suspending the process instance should also stop the execution of jobs for that process instance
+        ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery().singleResult();
+        ProcessInstance processInstance = runtimeService.startProcessInstanceById(processDefinition.getId());
+        assertEquals(1, managementService.createTimerJobQuery().count());
+        runtimeService.suspendProcessInstanceById(processInstance.getId());
+        assertEquals(1, managementService.createSuspendedJobQuery().count());
+
+        Job job = managementService.createTimerJobQuery().executable().singleResult();
+        assertNull(job);
+
+        Job suspendedJob = managementService.createSuspendedJobQuery().singleResult();
+        assertNotNull(suspendedJob);
+
+        // Activation of the suspended job instance should throw exception because parent is suspended
+        try {
+            managementService.moveSuspendedJobToExecutableJob(suspendedJob.getId());
+            fail("FlowableIllegalArgumentException expected. Cannot activate job with suspended parent");
+        } catch (FlowableIllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("Can not activate job "+ suspendedJob.getId() + ". Parent is suspended."));
+        }
+    }
+    
 }

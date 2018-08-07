@@ -13,22 +13,24 @@
 
 package org.flowable.engine;
 
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
+import org.flowable.common.engine.impl.AbstractEngineConfiguration;
+import org.flowable.common.engine.impl.HasTaskIdGeneratorEngineConfiguration;
+import org.flowable.common.engine.impl.cfg.BeansConfigurationHelper;
+import org.flowable.common.engine.impl.cfg.IdGenerator;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.runtime.Clock;
 import org.flowable.engine.cfg.HttpClientConfig;
 import org.flowable.engine.cfg.MailServerInfo;
-import org.flowable.engine.common.AbstractEngineConfiguration;
-import org.flowable.engine.common.impl.cfg.BeansConfigurationHelper;
-import org.flowable.engine.common.impl.history.HistoryLevel;
-import org.flowable.engine.common.runtime.Clock;
 import org.flowable.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration;
 import org.flowable.engine.impl.cfg.StandaloneProcessEngineConfiguration;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
+import org.flowable.task.service.TaskPostProcessor;
+
+import javax.sql.DataSource;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Configuration information from which a process engine can be build.
@@ -77,7 +79,7 @@ import org.flowable.job.service.impl.asyncexecutor.AsyncExecutor;
  * @see ProcessEngines
  * @author Tom Baeyens
  */
-public abstract class ProcessEngineConfiguration extends AbstractEngineConfiguration {
+public abstract class ProcessEngineConfiguration extends AbstractEngineConfiguration implements HasTaskIdGeneratorEngineConfiguration {
 
     protected String processEngineName = ProcessEngines.NAME_DEFAULT;
     protected int idBlockSize = 2500;
@@ -92,6 +94,7 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     protected boolean useSSL;
     protected boolean useTLS;
     protected String mailServerDefaultFrom = "flowable@localhost";
+    protected String mailServerForceTo;
     protected String mailSessionJndi;
     protected Map<String, MailServerInfo> mailServers = new HashMap<>();
     protected Map<String, String> mailSessionsJndi = new HashMap<>();
@@ -100,6 +103,7 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     protected HttpClientConfig httpClientConfig = new HttpClientConfig();
 
     protected HistoryLevel historyLevel;
+    protected boolean enableProcessDefinitionHistoryLevel;
 
     protected String jpaPersistenceUnitName;
     protected Object jpaEntityManagerFactory;
@@ -134,6 +138,14 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     protected ProcessEngineLifecycleListener processEngineLifecycleListener;
 
     protected boolean enableProcessDefinitionInfoCache;
+
+    /**
+     * generator used to generate task ids
+     */
+    protected IdGenerator taskIdGenerator;
+
+    /** postprocessor for a task builder */
+    protected TaskPostProcessor taskPostProcessor = null;
 
     /** use one of the static createXxxx methods instead */
     protected ProcessEngineConfiguration() {
@@ -294,6 +306,15 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
         return this;
     }
 
+    public String getMailServerForceTo() {
+        return mailServerForceTo;
+    }
+
+    public ProcessEngineConfiguration setMailServerForceTo(String mailServerForceTo) {
+        this.mailServerForceTo = mailServerForceTo;
+        return this;
+    }
+
     public MailServerInfo getMailServer(String tenantId) {
         return mailServers.get(tenantId);
     }
@@ -382,6 +403,15 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
 
     public ProcessEngineConfiguration setHistoryLevel(HistoryLevel historyLevel) {
         this.historyLevel = historyLevel;
+        return this;
+    }
+
+    public boolean isEnableProcessDefinitionHistoryLevel() {
+        return enableProcessDefinitionHistoryLevel;
+    }
+
+    public ProcessEngineConfiguration setEnableProcessDefinitionHistoryLevel(boolean enableProcessDefinitionHistoryLevel) {
+        this.enableProcessDefinitionHistoryLevel = enableProcessDefinitionHistoryLevel;
         return this;
     }
 
@@ -662,5 +692,31 @@ public abstract class ProcessEngineConfiguration extends AbstractEngineConfigura
     public ProcessEngineConfiguration setEnableProcessDefinitionInfoCache(boolean enableProcessDefinitionInfoCache) {
         this.enableProcessDefinitionInfoCache = enableProcessDefinitionInfoCache;
         return this;
+    }
+
+    @Override
+    public void initIdGenerator() {
+        super.initIdGenerator();
+        if (taskIdGenerator == null) {
+            taskIdGenerator = idGenerator;
+        }
+    }
+
+    @Override
+    public IdGenerator getTaskIdGenerator() {
+        return taskIdGenerator;
+    }
+
+    @Override
+    public void setTaskIdGenerator(IdGenerator taskIdGenerator) {
+        this.taskIdGenerator = taskIdGenerator;
+    }
+
+    public TaskPostProcessor getTaskPostProcessor() {
+        return taskPostProcessor;
+    }
+
+    public void setTaskPostProcessor(TaskPostProcessor processor) {
+        this.taskPostProcessor = processor;
     }
 }

@@ -15,9 +15,9 @@ package org.flowable.engine.test.bpmn.gateway;
 
 import java.util.List;
 
-import org.flowable.engine.common.impl.history.HistoryLevel;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.history.HistoricActivityInstance;
 import org.flowable.engine.impl.EventSubscriptionQueryImpl;
 import org.flowable.engine.impl.test.HistoryTestHelper;
@@ -212,7 +212,7 @@ public class ParallelGatewayTest extends PluggableFlowableTestCase {
 
                 assertEquals(1, subs.size());
                 EventSubscription sub = subs.get(0);
-                assertEquals(sub.getEventName(), "testmessage");
+                assertEquals("testmessage", sub.getEventName());
 
                 return sub.getExecutionId();
             }
@@ -242,7 +242,7 @@ public class ParallelGatewayTest extends PluggableFlowableTestCase {
 
                 assertEquals(1, subs.size());
                 EventSubscription sub = subs.get(0);
-                assertEquals(sub.getEventName(), "testmessage");
+                assertEquals("testmessage", sub.getEventName());
 
                 return sub.getExecutionId();
             }

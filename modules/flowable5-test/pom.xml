@@ -10,7 +10,7 @@
 		<groupId>org.flowable</groupId>
 		<artifactId>flowable-root</artifactId>
 		<relativePath>../..</relativePath>
-		<version>6.3.0-SNAPSHOT</version>
+		<version>6.3.2-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
@@ -126,8 +126,8 @@
 			<artifactId>joda-time</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.googlecode.catch-exception</groupId>
-			<artifactId>catch-exception</artifactId>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 

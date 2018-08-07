@@ -17,16 +17,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.flowable.engine.common.impl.Page;
-import org.flowable.engine.common.impl.db.AbstractDataManager;
-import org.flowable.engine.common.impl.db.CachedEntityMatcher;
+import org.flowable.common.engine.impl.Page;
+import org.flowable.common.engine.impl.db.AbstractDataManager;
+import org.flowable.common.engine.impl.db.DbSqlSession;
+import org.flowable.common.engine.impl.persistence.cache.CachedEntityMatcher;
 import org.flowable.job.api.Job;
+import org.flowable.job.service.JobServiceConfiguration;
 import org.flowable.job.service.impl.TimerJobQueryImpl;
 import org.flowable.job.service.impl.persistence.entity.TimerJobEntity;
 import org.flowable.job.service.impl.persistence.entity.TimerJobEntityImpl;
 import org.flowable.job.service.impl.persistence.entity.data.TimerJobDataManager;
 import org.flowable.job.service.impl.persistence.entity.data.impl.cachematcher.TimerJobsByExecutionIdMatcher;
-import org.flowable.job.service.impl.util.CommandContextUtil;
 
 /**
  * @author Tijs Rademakers
@@ -34,8 +35,14 @@ import org.flowable.job.service.impl.util.CommandContextUtil;
  */
 public class MybatisTimerJobDataManager extends AbstractDataManager<TimerJobEntity> implements TimerJobDataManager {
 
+    protected JobServiceConfiguration jobServiceConfiguration;
+    
     protected CachedEntityMatcher<TimerJobEntity> timerJobsByExecutionIdMatcher = new TimerJobsByExecutionIdMatcher();
 
+    public MybatisTimerJobDataManager(JobServiceConfiguration jobServiceConfiguration) {
+        this.jobServiceConfiguration = jobServiceConfiguration;
+    }
+    
     @Override
     public Class<? extends TimerJobEntity> getManagedEntityClass() {
         return TimerJobEntityImpl.class;
@@ -61,8 +68,14 @@ public class MybatisTimerJobDataManager extends AbstractDataManager<TimerJobEnti
     @Override
     @SuppressWarnings("unchecked")
     public List<TimerJobEntity> findTimerJobsToExecute(Page page) {
-        Date now = CommandContextUtil.getJobServiceConfiguration().getClock().getCurrentTime();
-        return getDbSqlSession().selectList("selectTimerJobsToExecute", now, page);
+        Map<String, Object> params = new HashMap<>(2);
+        String jobExecutionScope = jobServiceConfiguration.getJobExecutionScope();
+        params.put("jobExecutionScope", jobExecutionScope);
+        
+        Date now = jobServiceConfiguration.getClock().getCurrentTime();
+        params.put("now", now);
+        
+        return getDbSqlSession().selectList("selectTimerJobsToExecute", params, page);
     }
 
     @Override
@@ -77,7 +90,14 @@ public class MybatisTimerJobDataManager extends AbstractDataManager<TimerJobEnti
 
     @Override
     public List<TimerJobEntity> findJobsByExecutionId(final String executionId) {
-        return getList("selectTimerJobsByExecutionId", executionId, timerJobsByExecutionIdMatcher, true);
+        DbSqlSession dbSqlSession = getDbSqlSession();
+        
+        // If the execution has been inserted in the same command execution as this query, there can't be any in the database
+        if (isEntityInserted(dbSqlSession, "execution", executionId)) {
+            return getListFromCache(timerJobsByExecutionIdMatcher, executionId);
+        }
+        
+        return getList(dbSqlSession, "selectTimerJobsByExecutionId", executionId, timerJobsByExecutionIdMatcher, true);
     }
 
     @Override
@@ -112,5 +132,5 @@ public class MybatisTimerJobDataManager extends AbstractDataManager<TimerJobEnti
         params.put("tenantId", newTenantId);
         getDbSqlSession().update("updateTimerJobTenantIdForDeployment", params);
     }
-
+    
 }

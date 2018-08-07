@@ -60,6 +60,7 @@ public interface BpmnXMLConstants {
 
     public static final String ELEMENT_PROCESS = "process";
     public static final String ATTRIBUTE_PROCESS_EXECUTABLE = "isExecutable";
+    public static final String ATTRIBUTE_PROCESS_EAGER_EXECUTION_FETCHING = "isEagerExecutionFetching";
     public static final String ELEMENT_POTENTIAL_STARTER = "potentialStarter";
     public static final String ATTRIBUTE_PROCESS_CANDIDATE_USERS = "candidateStarterUsers";
     public static final String ATTRIBUTE_PROCESS_CANDIDATE_GROUPS = "candidateStarterGroups";
@@ -109,6 +110,7 @@ public interface BpmnXMLConstants {
     public static final String ATTRIBUTE_ACTIVITY_ASYNCHRONOUS = "async";
     public static final String ATTRIBUTE_ACTIVITY_EXCLUSIVE = "exclusive";
     public static final String ATTRIBUTE_ACTIVITY_ISFORCOMPENSATION = "isForCompensation";
+    public static final String ATTRIBUTE_ACTIVITY_TRIGGERABLE = "triggerable";
 
     public static final String ELEMENT_IMPORT = "import";
     public static final String ATTRIBUTE_IMPORT_TYPE = "importType";
@@ -191,6 +193,7 @@ public interface BpmnXMLConstants {
     public static final String ATTRIBUTE_TASK_SERVICE_RESULTVARIABLE = "resultVariableName";
     public static final String ATTRIBUTE_TASK_SERVICE_EXTENSIONID = "extensionId";
     public static final String ATTRIBUTE_TASK_SERVICE_SKIP_EXPRESSION = "skipExpression";
+    public static final String ATTRIBUTE_TASK_SERVICE_USE_LOCAL_SCOPE_FOR_RESULT_VARIABLE = "useLocalScopeForResultVariable";
 
     public static final String ATTRIBUTE_TASK_USER_ASSIGNEE = "assignee";
     public static final String ATTRIBUTE_TASK_USER_OWNER = "owner";
@@ -209,6 +212,8 @@ public interface BpmnXMLConstants {
     public static final String ATTRIBUTE_TASK_RULE_CLASS = "class";
 
     public static final String ATTRIBUTE_CALL_ACTIVITY_CALLEDELEMENT = "calledElement";
+    public static final String ATTRIBUTE_CALL_ACTIVITY_CALLEDELEMENTTYPE = "calledElementType";
+    public static final String ATTRIBUTE_CALL_ACTIVITY_PROCESS_INSTANCE_NAME = "processInstanceName";
     public static final String ATTRIBUTE_CALL_ACTIVITY_BUSINESS_KEY = "businessKey";
     public static final String ATTRIBUTE_CALL_ACTIVITY_INHERIT_BUSINESS_KEY = "inheritBusinessKey";
     public static final String ATTRIBUTE_CALL_ACTIVITY_INHERITVARIABLES = "inheritVariables";
@@ -321,5 +326,6 @@ public interface BpmnXMLConstants {
     public static final String MAP_EXCEPTION = "mapException";
     public static final String MAP_EXCEPTION_ERRORCODE = "errorCode";
     public static final String MAP_EXCEPTION_ANDCHILDREN = "includeChildExceptions";
+    public static final String MAP_EXCEPTION_ROOTCAUSE = "rootCause";
 
 }

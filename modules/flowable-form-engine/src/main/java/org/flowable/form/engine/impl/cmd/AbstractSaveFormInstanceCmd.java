@@ -16,9 +16,11 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.impl.interceptor.Command;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.impl.identity.Authentication;
+import org.flowable.common.engine.impl.interceptor.Command;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
+import org.flowable.form.api.FormInfo;
 import org.flowable.form.api.FormInstance;
 import org.flowable.form.engine.FormEngineConfiguration;
 import org.flowable.form.engine.impl.persistence.entity.FormInstanceEntity;
@@ -26,7 +28,7 @@ import org.flowable.form.engine.impl.persistence.entity.FormInstanceEntityManage
 import org.flowable.form.engine.impl.util.CommandContextUtil;
 import org.flowable.form.model.FormField;
 import org.flowable.form.model.FormFieldTypes;
-import org.flowable.form.model.FormModel;
+import org.flowable.form.model.SimpleFormModel;
 import org.joda.time.LocalDate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +39,7 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
     private static final long serialVersionUID = 1L;
 
     protected String formModelId;
-    protected FormModel formModel;
+    protected FormInfo formInfo;
     protected Map<String, Object> variables;
     protected String taskId;
     protected String processInstanceId;
@@ -46,8 +48,8 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
     protected String scopeType;
     protected String scopeDefinitionId;
 
-    public AbstractSaveFormInstanceCmd(FormModel formModel, Map<String, Object> variables, String taskId, String processInstanceId, String processDefinitionId) {
-        this.formModel = formModel;
+    public AbstractSaveFormInstanceCmd(FormInfo formInfo, Map<String, Object> variables, String taskId, String processInstanceId, String processDefinitionId) {
+        this.formInfo = formInfo;
         this.variables = variables;
         this.taskId = taskId;
         this.processInstanceId = processInstanceId;
@@ -71,8 +73,8 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
         this.scopeDefinitionId = scopeDefinitionId;
     }
     
-    public AbstractSaveFormInstanceCmd(FormModel formModel, Map<String, Object> variables, String taskId, String scopeId, String scopeType, String scopeDefinitionId) {
-        this.formModel = formModel;
+    public AbstractSaveFormInstanceCmd(FormInfo formInfo, Map<String, Object> variables, String taskId, String scopeId, String scopeType, String scopeDefinitionId) {
+        this.formInfo = formInfo;
         this.variables = variables;
         this.taskId = taskId;
         this.scopeId = scopeId;
@@ -83,14 +85,14 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
     @Override
     public FormInstance execute(CommandContext commandContext) {
 
-        if (formModel == null) {
+        if (formInfo == null) {
             if (formModelId == null) {
                 throw new FlowableException("Invalid form model and no form model Id provided");
             }
-            formModel = CommandContextUtil.getFormEngineConfiguration().getFormRepositoryService().getFormModelById(formModelId);
+            formInfo = CommandContextUtil.getFormEngineConfiguration().getFormRepositoryService().getFormModelById(formModelId);
         }
 
-        if (formModel == null || formModel.getId() == null) {
+        if (formInfo == null || formInfo.getId() == null) {
             throw new FlowableException("Invalid form model provided");
         }
 
@@ -100,6 +102,8 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
         ObjectNode valuesNode = submittedFormValuesJson.putObject("values");
 
         // Loop over all form fields and see if a value was provided
+        
+        SimpleFormModel formModel = (SimpleFormModel) formInfo.getFormModel();
         Map<String, FormField> fieldMap = formModel.allFieldsAsMap();
         for (String fieldId : fieldMap.keySet()) {
             FormField formField = fieldMap.get(fieldId);
@@ -117,6 +121,9 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
 
                 } else if (variableValue instanceof Double) {
                     valuesNode.put(fieldId, (Double) variables.get(fieldId));
+                    
+                } else if (variableValue instanceof Boolean) {
+                    valuesNode.put(fieldId, (Boolean) variables.get(fieldId));
 
                 } else if (variableValue instanceof LocalDate) {
                     valuesNode.put(fieldId, ((LocalDate) variableValue).toString());
@@ -146,7 +153,7 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
             formInstanceEntity = formInstanceEntityManager.create();
         }
 
-        formInstanceEntity.setFormDefinitionId(formModel.getId());
+        formInstanceEntity.setFormDefinitionId(formInfo.getId());
         formInstanceEntity.setTaskId(taskId);
         
         if (processInstanceId != null) {
@@ -158,8 +165,10 @@ public abstract class AbstractSaveFormInstanceCmd implements Command<FormInstanc
             formInstanceEntity.setScopeType(scopeType);
             formInstanceEntity.setScopeDefinitionId(scopeDefinitionId);
         }
-        
+
         formInstanceEntity.setSubmittedDate(new Date());
+        formInstanceEntity.setSubmittedBy(Authentication.getAuthenticatedUserId());
+
         try {
             formInstanceEntity.setFormValueBytes(objectMapper.writeValueAsBytes(submittedFormValuesJson));
         } catch (Exception e) {

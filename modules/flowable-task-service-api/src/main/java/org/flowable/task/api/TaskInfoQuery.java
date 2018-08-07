@@ -15,9 +15,10 @@ package org.flowable.task.api;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.query.Query;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.query.Query;
 import org.flowable.identitylink.api.IdentityLink;
 import org.flowable.task.api.history.HistoricTaskInstanceQuery;
 
@@ -139,7 +140,12 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
      * Only select tasks for which there exist an {@link IdentityLink} with the given user, including tasks which have been assigned to the given user (assignee) or owned by the given user (owner).
      */
     T taskInvolvedUser(String involvedUser);
-    
+
+    /**
+     * Only select tasks for which there exist an {@link IdentityLink} with the given Groups.
+     */
+    T taskInvolvedGroups(Set<String> involvedGroup);
+
     /**
      * Allows to select a task using {@link #taskCandidateGroup(String)} {@link #taskCandidateGroupIn(List)} or {@link #taskCandidateUser(String)} but ignore the assignee value instead of querying for an empty assignee.
      */
@@ -309,6 +315,11 @@ public interface TaskInfoQuery<T extends TaskInfoQuery<?, ?>, V extends TaskInfo
 
     /** Only select tasks that have a process definition for which the key is present in the given list **/
     T processDefinitionKeyIn(List<String> processDefinitionKeys);
+
+    /**
+     * Only select tasks which created from the given task definition referenced by id.
+     */
+    T taskDefinitionId(String taskDefinitionId);
 
     /**
      * Only select tasks which are part of a process instance which has the given process definition id.

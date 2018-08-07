@@ -13,14 +13,12 @@
 package org.flowable.job.service.impl.persistence.entity;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.impl.persistence.entity.AbstractEntity;
+import org.flowable.common.engine.impl.persistence.entity.AbstractEntity;
 import org.flowable.job.api.JobInfo;
 import org.flowable.job.service.JobServiceConfiguration;
 
@@ -71,6 +69,7 @@ public abstract class AbstractJobEntityImpl extends AbstractEntity implements Ab
         persistentState.put("duedate", duedate);
         persistentState.put("exceptionMessage", exceptionMessage);
         persistentState.put("jobHandlerType", jobHandlerType);
+        persistentState.put("processDefinitionId", processDefinitionId);
 
         if (customValuesByteArrayRef != null) {
             persistentState.put("customValuesByteArrayRef", customValuesByteArrayRef);
@@ -155,34 +154,42 @@ public abstract class AbstractJobEntityImpl extends AbstractEntity implements Ab
         this.processDefinitionId = processDefinitionId;
     }
     
+    @Override
     public String getScopeId() {
         return scopeId;
     }
 
+    @Override
     public void setScopeId(String scopeId) {
         this.scopeId = scopeId;
     }
 
+    @Override
     public String getSubScopeId() {
         return subScopeId;
     }
 
+    @Override
     public void setSubScopeId(String subScopeId) {
         this.subScopeId = subScopeId;
     }
 
+    @Override
     public String getScopeType() {
         return scopeType;
     }
 
+    @Override
     public void setScopeType(String scopeType) {
         this.scopeType = scopeType;
     }
 
+    @Override
     public String getScopeDefinitionId() {
         return scopeDefinitionId;
     }
 
+    @Override
     public void setScopeDefinitionId(String scopeDefinitionId) {
         this.scopeDefinitionId = scopeDefinitionId;
     }

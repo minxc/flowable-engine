@@ -15,7 +15,7 @@ package org.flowable.idm.engine.test.api.identity;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
 import org.flowable.idm.api.Group;
 import org.flowable.idm.api.Privilege;
 import org.flowable.idm.api.PrivilegeMapping;
@@ -176,4 +176,18 @@ public class PrivilegesTest extends PluggableFlowableIdmTestCase {
         assertTrue(groups.contains("admins"));
         assertTrue(groups.contains("engineering"));
     }
+    
+    public void testPrivilegeUniqueName() {
+        Privilege privilege = idmIdentityService.createPrivilege("test");
+        
+        try {
+            idmIdentityService.createPrivilege("test");
+            fail();
+        } catch (Exception e) { 
+            e.printStackTrace();
+        }
+        
+        idmIdentityService.deletePrivilege(privilege.getId());
+    }
+    
 }

@@ -20,12 +20,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.flowable.bpmn.model.FlowNode;
+import org.flowable.common.engine.api.FlowableIllegalArgumentException;
+import org.flowable.common.engine.api.delegate.event.FlowableEngineEventType;
+import org.flowable.common.engine.api.delegate.event.FlowableEvent;
+import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.impl.service.CommonEngineServiceImpl;
 import org.flowable.engine.RuntimeService;
-import org.flowable.engine.common.api.FlowableIllegalArgumentException;
-import org.flowable.engine.common.api.delegate.event.FlowableEngineEventType;
-import org.flowable.engine.common.api.delegate.event.FlowableEvent;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.form.FormData;
+import org.flowable.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.flowable.engine.impl.cmd.ActivateProcessInstanceCmd;
 import org.flowable.engine.impl.cmd.AddEventListenerCommand;
 import org.flowable.engine.impl.cmd.AddIdentityLinkForProcessInstanceCmd;
@@ -77,16 +79,16 @@ import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.engine.runtime.ProcessInstanceBuilder;
 import org.flowable.engine.runtime.ProcessInstanceQuery;
 import org.flowable.engine.task.Event;
-import org.flowable.form.model.FormModel;
+import org.flowable.form.api.FormInfo;
 import org.flowable.identitylink.api.IdentityLink;
-import org.flowable.identitylink.service.IdentityLinkType;
+import org.flowable.identitylink.api.IdentityLinkType;
 import org.flowable.variable.api.persistence.entity.VariableInstance;
 
 /**
  * @author Tom Baeyens
  * @author Daniel Meyer
  */
-public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
+public class RuntimeServiceImpl extends CommonEngineServiceImpl<ProcessEngineConfigurationImpl> implements RuntimeService {
 
     @Override
     public ProcessInstance startProcessInstanceByKey(String processDefinitionKey) {
@@ -154,7 +156,7 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
     }
 
     @Override
-    public FormModel getStartFormModel(String processDefinitionId, String processInstanceId) {
+    public FormInfo getStartFormModel(String processDefinitionId, String processInstanceId) {
         return commandExecutor.execute(new GetStartFormModelCmd(processDefinitionId, processInstanceId));
     }
 
@@ -396,6 +398,11 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
         commandExecutor.execute(new TriggerCmd(executionId, null));
     }
 
+    @Override
+    public void triggerAsync(String executionId) {
+        commandExecutor.execute(new TriggerCmd(executionId, null, true));
+    }
+
     public void signal(String executionId, Map<String, Object> processVariables) {
         commandExecutor.execute(new TriggerCmd(executionId, processVariables));
     }
@@ -403,6 +410,11 @@ public class RuntimeServiceImpl extends ServiceImpl implements RuntimeService {
     @Override
     public void trigger(String executionId, Map<String, Object> processVariables) {
         commandExecutor.execute(new TriggerCmd(executionId, processVariables));
+    }
+
+    @Override
+    public void triggerAsync(String executionId, Map<String, Object> processVariables) {
+        commandExecutor.execute(new TriggerCmd(executionId, processVariables, true));
     }
 
     @Override

@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.flowable.common.engine.api.repository.EngineResource;
+import org.flowable.common.engine.impl.persistence.entity.AbstractEntityNoRevision;
 import org.flowable.dmn.engine.DmnEngineConfiguration;
-import org.flowable.engine.common.api.repository.EngineResource;
-import org.flowable.engine.common.impl.persistence.entity.AbstractEntityNoRevision;
 
 /**
  * @author Tijs Rademakers
@@ -67,6 +67,7 @@ public class DmnDeploymentEntityImpl extends AbstractEntityNoRevision implements
         Map<String, Object> persistentState = new HashMap<>();
         persistentState.put("category", this.category);
         persistentState.put("tenantId", tenantId);
+        persistentState.put("parentDeploymentId", parentDeploymentId);
         return persistentState;
     }
 
@@ -168,6 +169,16 @@ public class DmnDeploymentEntityImpl extends AbstractEntityNoRevision implements
     
     @Override
     public String getKey() {
+        return null;
+    }
+    
+    @Override
+    public String getDerivedFrom() {
+        return null;
+    }
+
+    @Override
+    public String getDerivedFromRoot() {
         return null;
     }
 

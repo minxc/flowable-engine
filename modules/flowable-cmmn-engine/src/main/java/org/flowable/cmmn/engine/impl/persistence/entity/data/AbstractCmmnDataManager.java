@@ -13,8 +13,8 @@
 package org.flowable.cmmn.engine.impl.persistence.entity.data;
 
 import org.flowable.cmmn.engine.CmmnEngineConfiguration;
-import org.flowable.engine.common.impl.db.AbstractDataManager;
-import org.flowable.engine.common.impl.persistence.entity.Entity;
+import org.flowable.common.engine.impl.db.AbstractDataManager;
+import org.flowable.common.engine.impl.persistence.entity.Entity;
 
 /**
  * @author Joram Barrez
@@ -25,6 +25,10 @@ public abstract class AbstractCmmnDataManager<EntityImpl extends Entity> extends
 
     public AbstractCmmnDataManager(CmmnEngineConfiguration cmmnEngineConfiguration) {
         this.cmmnEngineConfiguration = cmmnEngineConfiguration;
+    }
+
+    protected CmmnEngineConfiguration getCmmnEngineConfiguration() {
+        return cmmnEngineConfiguration;
     }
 
 }

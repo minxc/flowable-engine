@@ -22,11 +22,11 @@ import java.util.Map;
 
 import org.flowable.bpmn.model.FlowElement;
 import org.flowable.bpmn.model.FlowableListener;
+import org.flowable.common.engine.api.FlowableException;
+import org.flowable.common.engine.impl.context.Context;
+import org.flowable.common.engine.impl.db.SuspensionState;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.engine.ProcessEngineConfiguration;
-import org.flowable.engine.common.api.FlowableException;
-import org.flowable.engine.common.impl.context.Context;
-import org.flowable.engine.common.impl.db.SuspensionState;
-import org.flowable.engine.common.impl.interceptor.CommandContext;
 import org.flowable.engine.impl.persistence.CountingExecutionEntity;
 import org.flowable.engine.impl.util.CommandContextUtil;
 import org.flowable.engine.impl.util.CountingEntityUtil;
@@ -454,6 +454,10 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
     public String getSuperExecutionId() {
         return superExecutionId;
     }
+    
+    public void setSuperExecutionId(String superExecutionId) {
+        this.superExecutionId = superExecutionId;
+    }
 
     @Override
     public ExecutionEntityImpl getSuperExecution() {
@@ -878,6 +882,10 @@ public class ExecutionEntityImpl extends VariableScopeImpl implements ExecutionE
     @Override
     public String getActivityId() {
         return activityId;
+    }
+    
+    public void setActivityId(String activityId) {
+        this.activityId = activityId;
     }
 
     @Override

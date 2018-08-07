@@ -80,6 +80,7 @@ public class SubProcess extends Activity implements FlowElementsContainer {
         }
     }
 
+    @Override
     public Map<String, FlowElement> getFlowElementMap() {
         return flowElementMap;
     }
@@ -165,12 +166,12 @@ public class SubProcess extends Activity implements FlowElementsContainer {
 
         flowElementList.clear();
         for (FlowElement flowElement : otherElement.getFlowElements()) {
-            addFlowElement(flowElement);
+            addFlowElement(flowElement.clone());
         }
 
         artifactList.clear();
         for (Artifact artifact : otherElement.getArtifacts()) {
-            addArtifact(artifact);
+            addArtifact(artifact.clone());
         }
     }
 

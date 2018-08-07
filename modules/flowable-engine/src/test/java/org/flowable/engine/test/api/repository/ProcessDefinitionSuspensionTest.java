@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.flowable.engine.common.api.FlowableException;
+import org.flowable.common.engine.api.FlowableException;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
@@ -225,14 +225,14 @@ public class ProcessDefinitionSuspensionTest extends PluggableFlowableTestCase {
         repositoryService.suspendProcessDefinitionById(processDefinition.getId());
 
         try {
-            formService.submitStartFormData(processDefinition.getId(), new HashMap<String, String>());
+            formService.submitStartFormData(processDefinition.getId(), new HashMap<>());
             fail();
         } catch (FlowableException e) {
             // This is expected
         }
 
         try {
-            formService.submitStartFormData(processDefinition.getId(), "someKey", new HashMap<String, String>());
+            formService.submitStartFormData(processDefinition.getId(), "someKey", new HashMap<>());
             fail();
         } catch (FlowableException e) {
             e.printStackTrace();

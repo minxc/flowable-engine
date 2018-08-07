@@ -21,7 +21,7 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 
-import org.flowable.engine.common.impl.interceptor.CommandContext;
+import org.flowable.common.engine.impl.interceptor.CommandContext;
 import org.flowable.idm.api.User;
 import org.flowable.idm.engine.impl.UserQueryImpl;
 import org.flowable.idm.engine.impl.persistence.entity.UserEntity;
@@ -109,7 +109,7 @@ public class LDAPUserQueryImpl extends UserQueryImpl {
                     return user;
 
                 } catch (NamingException ne) {
-                    LOGGER.debug("Could not find user {} : {}", userId, ne.getMessage(), ne);
+                    LOGGER.error("Could not find user {} : {}", userId, ne.getMessage(), ne);
                     return null;
                 }
             }

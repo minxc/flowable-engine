@@ -20,8 +20,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.ibatis.exceptions.PersistenceException;
-import org.flowable.engine.common.impl.history.HistoryLevel;
-import org.flowable.engine.common.impl.identity.Authentication;
+import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.engine.impl.test.HistoryTestHelper;
 import org.flowable.engine.impl.test.PluggableFlowableTestCase;
 import org.flowable.engine.test.Deployment;
@@ -46,7 +46,7 @@ public class ConcurrentEngineUsageTest extends PluggableFlowableTestCase {
             int numberOfProcessesPerThread = 5;
             int totalNumberOfTasks = 2 * numberOfThreads * numberOfProcessesPerThread;
 
-            ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 10, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(numberOfThreads));
+            ThreadPoolExecutor executor = new ThreadPoolExecutor(10, 10, 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(numberOfThreads));
 
             for (int i = 0; i < numberOfThreads; i++) {
                 executor.execute(new ConcurrentProcessRunnerRunnable(numberOfProcessesPerThread, "kermit" + i));
